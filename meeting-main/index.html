@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<link rel="stylesheet" href="/platform.css">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0a0b0d">
@@ -520,26 +521,22 @@
 
   /* ---------------------------- appels API ------------------------------ */
   async function api(payload, onDelta, signal, noRetry) {
-    if (!S.password) await askPassword('Saisis le mot de passe de l’application.');
+
     const set = S.settings[S.cfg.societe] || { fiche:'', regles:'' };
     const body = Object.assign({
-      societe: S.cfg.societe, fiche: set.fiche, regles: set.regles,
+      dossierId:window.meetActiveDossier, societe: S.cfg.societe, fiche: set.fiche, regles: set.regles,
       contexte: S.cfg.contexte, scenario: S.cfg.scenario, plan: S.plan
     }, payload);
     let res;
     try {
       res = await fetch('/api/openai', { method:'POST', signal,
-        headers:{ 'Content-Type':'application/json', 'x-app-password': S.password },
+        headers:{ 'Content-Type':'application/json', 'x-meet-client': 'advisor' },
         body: JSON.stringify(body) });
     } catch (e) {
       if (e && e.name === 'AbortError') throw e;
       throw new Error('Serveur injoignable — vérifie ta connexion.');
     }
-    if (res.status === 401) {
-      S.password = ''; lsDel(LS.pw);
-      if (!noRetry) { await askPassword('Mot de passe refusé. Saisis celui défini dans APP_PASSWORD.'); return api(payload, onDelta, signal, true); }
-      throw new Error('Mot de passe refusé.');
-    }
+    if(res.status===401||res.status===428){location.assign('/login');throw new Error('Session expirée.');}
     if (!res.ok) {
       let d = null; try { d = await res.json(); } catch(e){}
       const err = new Error((d && d.error) || ('Erreur serveur ' + res.status + '.')); err.status = res.status; throw err;
@@ -573,7 +570,7 @@
   }
   function ping() {
     fetch('/api/openai', { method:'POST',
-      headers:{ 'Content-Type':'application/json', 'x-app-password': S.password || '' },
+      headers:{ 'Content-Type':'application/json', 'x-meet-client': 'advisor' || '' },
       body: JSON.stringify({ mode:'ping' }) }).catch(() => {});
   }
 
@@ -635,6 +632,7 @@
 
   /* ----------------------------- documents ------------------------------ */
   $('docFiles').addEventListener('change', async (e) => {
+    $('docList').textContent='Utilisez « Pièce client » dans le panneau Dossier partagé pour conserver les fichiers avec leurs droits.'; return;
     const files = Array.prototype.slice.call(e.target.files || []);
     for (const f of files) {
       let text = '';
@@ -648,7 +646,7 @@
 
   /* ---------------------------- paramètres ------------------------------ */
   function loadSettings() {
-    const s = lsGet(LS.set);
+    const s = null;
     if (s && s.PWM && s.ADM) S.settings = s;
     $('fichePWM').value = S.settings.PWM.fiche || '';
     $('reglesPWM').value = S.settings.PWM.regles || '';
@@ -657,7 +655,7 @@
   }
   $('btnSettings').addEventListener('click', () => { loadSettings(); show('settings'); });
   $('btnCloseSettings').addEventListener('click', () => show(S.started ? 'call' : 'config'));
-  $('btnSaveSettings').addEventListener('click', () => {
+  $('btnSaveSettings').addEventListener('click', () => { $('settingsMsg').textContent='Paramètres institutionnels : gestion habilitée non configurée.'; return;
     S.settings = {
       PWM:{ fiche:$('fichePWM').value.trim(), regles:$('reglesPWM').value.trim() },
       ADM:{ fiche:$('ficheADM').value.trim(), regles:$('reglesADM').value.trim() }
@@ -1103,10 +1101,10 @@
   }
 
   async function dgToken() {
-    if (!S.password) await askPassword('Saisis le mot de passe de l’application.');
+
     const r = await fetch('/api/deepgram-token', { method:'POST',
-      headers:{ 'Content-Type':'application/json', 'x-app-password': S.password } });
-    if (r.status === 401) { S.password = ''; lsDel(LS.pw); throw new Error('Mot de passe refusé.'); }
+      headers:{ 'Content-Type':'application/json' },body:JSON.stringify({dossierId:window.meetActiveDossier}) });
+    if(r.status===401){location.assign('/login');throw new Error('Session expirée.');}
     const d = await r.json().catch(() => null);
     if (!r.ok || !d || !d.access_token) throw new Error((d && d.error) || 'Jeton Deepgram indisponible.');
     return d.access_token;
@@ -1148,7 +1146,9 @@
       if (!mime && window.MediaRecorder && MediaRecorder.isTypeSupported(c)) mime = c; });
     try { dg.rec = new MediaRecorder(dg.stream, mime ? { mimeType: mime } : undefined); }
     catch (e) { dg.rec = null; return; }
-    dg.rec.ondataavailable = (e) => { if (e.data && e.data.size && dg.ws && dg.ws.readyState === 1) dg.ws.send(e.data); };
+    window.meetRecorderStarted?.();
+    dg.rec.ondataavailable = (e) => { if(e.data&&e.data.size){window.meetAudioChunk?.(e.data);if(dg.ws&&dg.ws.readyState===1)dg.ws.send(e.data);} };
+    dg.rec.onstop=()=>window.meetRecorderStopped?.();
     dg.rec.start(250);
   }
   function stopRec() { if (dg.rec) { try { dg.rec.stop(); } catch(e){} dg.rec = null; } }
@@ -1335,7 +1335,7 @@
 
   async function startCall() {
     if (!S.cfg.societe || !S.cfg.duree || S.cfg.contexte.length < 10 || !S.cfg.consent) { show('config'); validateCfg(); return; }
-    window.dossierEnsure?.();
+    try { if(!window.dossierEnsure)throw new Error('Chargement du dossier en cours.'); await window.dossierEnsure(); } catch(e){$('cfgErr').textContent=e.message;show('config');return;}
     show('call');
     S.started = true; S.listening = true; S.lastResume = Date.now(); S.t0 = Date.now();
     S.phase = 'intro'; $('introPanel').hidden = false; $('prompter').hidden = true;
@@ -1452,6 +1452,7 @@
       mmss(S.elapsedMs) + ' sur ' + S.cfg.duree + ' min prévues';
     $('reportBody').innerHTML = '<div style="color:var(--dim)"><span class="spin"></span> Génération du compte rendu…</div>';
     $('btnCopy').disabled = true; $('btnDl').disabled = true;
+    if(window.meetEndCall){try{S.reportText=await window.meetEndCall();renderReport(S.reportText,false);}catch(e){$('reportBody').textContent=e.message;}return;}
     let acc = '';
     try {
       const d = await api({
@@ -1562,8 +1563,7 @@
   });
   $('btnBackCall').addEventListener('click', () => show('call'));
   $('btnNewCall').addEventListener('click', () => {
-    if (!confirm('Effacer cet appel et repartir de zéro ?')) return;
-    lsDel(LS.call); location.reload();
+    location.assign('/advisor');
   });
 
   /* ---------------------------- persistance ----------------------------- */
@@ -1573,18 +1573,14 @@
     pTimer = setTimeout(() => {
       pTimer = null;
       window.dossierSaveCall?.({cfg:{...S.cfg,consent:false},segments:S.segments,facts:S.facts,questions:S.questions,resume:S.resume,contexte:S.contexte,elapsedMs:elapsedNow(),reportText:S.reportText,speakerMe:S.speakerMe});
-      lsSet(LS.call, { cfg:S.cfg, plan:S.plan, reserve:S.reserve, segments:S.segments.slice(-3000),
-        facts:S.facts, questions:S.questions, contexte:S.contexte, resume:S.resume,
-        phase:S.phase, introState:S.introState, categorie:S.categorie, speakerMe:S.speakerMe,
-        elapsedMs: elapsedNow(), started:S.started, reportText:S.reportText, savedAt:Date.now() });
     }, 1200);
   }
 
   /* ------------------------------ démarrage ----------------------------- */
   function boot() {
-    const pw = lsGet(LS.pw); if (pw) S.password = pw;
+    lsDel(LS.pw); S.password='individual-session';
     loadSettings();
-    const c = lsGet(LS.cfg);
+    const c = null;
     if (c) {
       S.cfg = Object.assign(S.cfg, c); S.cfg.consent = false;
       if (c.societe) { segSet('segSociete', c.societe);
@@ -1598,7 +1594,7 @@
     validateCfg();
     listMics();
     ping();
-    if (!S.password) askPassword('Saisis le mot de passe de l’application. Il sera mémorisé sur ce poste.');
+    $('pwOverlay').hidden=true;
     window.addEventListener('beforeunload', (e) => {
       if (S.listening) { e.preventDefault(); e.returnValue = ''; }
     });
@@ -1613,6 +1609,6 @@
     S, applySelect, maybeLeaveIntro, addSegment, setInterim, setCurrent, renderIntro };
 })();
 </script>
-<script type="module" src="/dossier-ui.js"></script>
+<script type="module" src="/advisor-cloud.js"></script>
 </body>
 </html>

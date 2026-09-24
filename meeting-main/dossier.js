@@ -37,7 +37,9 @@ export function validateExtraction(result,sources){
   if(!field || !source || source.role==='advisor' || typeof f.quote!=='string' || f.quote.trim().length<4 || !source.text.includes(f.quote) || typeof f.raw!=='string' || !f.raw.trim() || !f.quote.includes(f.raw)) continue;
   facts.push({fieldId:field.id,sourceId:source.id,quote:f.quote.slice(0,1500),raw:f.raw.slice(0,1000),entity:typeof f.entity==='string'&&f.quote.includes(f.entity)?f.entity.slice(0,150):'',currency:/^[A-Z]{3}$/.test(f.currency||'')&&f.quote.includes(f.currency)?f.currency:'',period:typeof f.period==='string'&&f.quote.includes(f.period)?f.period.slice(0,100):'',role:source.role,rows:Array.isArray(f.rows)?f.rows.slice(0,30).filter(r=>r && typeof r==='object' && !Array.isArray(r)).map(r=>Object.fromEntries(Object.entries(r).filter(([k,v])=>['label','amount','currency','period','entity','status'].includes(k)&&typeof v==='string'&&f.quote.includes(v)))):[]});
  }
- return {facts};
+ const actions=(Array.isArray(result.actions)?result.actions:[]).slice(0,20).flatMap(a=>{const source=sources.find(s=>s.id===a.sourceId);if(!source||typeof a.title!=='string'||a.title.length<4||!source.text.includes(a.title))return [];return [{title:a.title.slice(0,1000),sourceId:source.id,due:typeof a.due==='string'&&/^20\d{2}-\d{2}-\d{2}$/.test(a.due)&&source.text.includes(a.due)&&Number.isFinite(Date.parse(a.due))&&new Date(a.due).toISOString().slice(0,10)===a.due?a.due:null}];});
+ const constraints=(Array.isArray(result.constraints)?result.constraints:[]).slice(0,20).flatMap(c=>{const source=sources.find(s=>s.id===c.sourceId);if(!source||typeof c.cause!=='string'||c.cause.length<5||!source.text.includes(c.cause)||!['financier','calendrier','contractuel','juridique','stratégique'].includes(c.type))return [];return [{sourceId:source.id,cause:c.cause.slice(0,1000),type:c.type,consequence:typeof c.consequence==='string'&&source.text.includes(c.consequence)?c.consequence:'À préciser',status:'À confirmer'}];});
+ return {facts,actions,constraints};
 }
 export function ingest(d,result,sources){
  const validated=validateExtraction(result,sources);
@@ -46,6 +48,7 @@ export function ingest(d,result,sources){
   if(d.facts.some(x=>x.fieldId===f.fieldId&&x.sourceId===f.sourceId&&x.raw===f.raw))continue;
   const fact={...f,id:uid(),at:new Date().toISOString(),superseded:false};d.facts.push(fact);event(d,'fact.proposed',{factId:fact.id});
  }
+ for(const c of validated.constraints)if(!d.constraints.some(x=>x.sourceId===c.sourceId&&x.cause===c.cause))d.constraints.push({...c,id:uid(),at:new Date().toISOString()});
  for(const s of sources)if(!d.processed.includes(s.id))d.processed.push(s.id);
  d.metrics.batches++;return d;
 }
@@ -61,7 +64,7 @@ export function state(d,f){
 export function needs(d,category){return fields.filter(f=>!f.restricted&&(!category||f.category===category)&&!d.actions[f.id]&&f.sources.some(s=>d.targets.includes(s.model))&&state(d,f).info!=='declared').sort((a,b)=>Number(state(d,b).info==='conflict')-Number(state(d,a).info==='conflict')||b.sources.length-a.sources.length);}
 export function defer(d,id,status,reason,owner='',due=''){if(!fields.some(f=>f.id===id)||!reason.trim())throw new Error('Motif obligatoire');d.actions[id]={status,reason,owner,due,at:new Date().toISOString()};event(d,'followup.created',{fieldId:id,...d.actions[id]});}
 export function correct(d,id){const fact=d.facts.find(f=>f.id===id);if(!fact)throw new Error('Fait absent');for(const f of d.facts)if(f.fieldId===fact.fieldId&&f.id!==id)f.superseded=true;fact.superseded=false;event(d,'correction.confirmed',{factId:id});}
-export function progress(d){const fs=fields.filter(f=>state(d,f).applicability==='now'&&f.sources.some(s=>d.targets.includes(s.model)));return {known:fs.filter(f=>state(d,f).info==='declared').length,total:fs.length,received:d.evidence.length,verified:0,validations:0};}
+export function progress(d){const fs=fields.filter(f=>state(d,f).applicability==='now'&&f.sources.some(s=>d.targets.includes(s.model)));return {known:fs.filter(f=>state(d,f).info==='declared').length,total:fs.length,received:d.evidence.filter(e=>e.status==='received').length,verified:0,validations:0};}
 export function draft(d,model){const fs=fields.filter(f=>f.sources.some(s=>s.model===model));return '# '+model+' — BROUILLON À REVOIR\n\nDossier : '+d.name+'\nVersion : '+new Date().toISOString()+'\nAucune validation, émission ou signature.\n\n'+fs.map(f=>'## '+f.label+'\n'+(d.facts.filter(x=>x.fieldId===f.id&&!x.superseded).map(x=>'- '+x.raw+' ['+state(d,f).info+']\n  Source '+x.sourceId+' : « '+x.quote+' »'+(x.rows.length?'\n  Lignes structurées : '+JSON.stringify(x.rows):'')).join('\n')||'Inconnu — à recueillir.')+'\nRéférentiel : '+f.sources.filter(s=>s.model===model).map(s=>s.language+' §'+s.section+' p.'+s.page).join(', ')).join('\n\n');}
 export function exportMarkdown(d){return '---\ndossier_id: '+d.id+'\nstatut: brouillon\n---\n\n# '+d.name+'\n\n'+d.targets.map(m=>draft(d,m)).join('\n\n---\n\n')+'\n\n## Pièces et relances\n'+fields.filter(f=>!f.restricted&&!d.evidence.some(e=>e.fieldId===f.id)).map(f=>'- '+f.label+': '+(d.actions[f.id]?JSON.stringify(d.actions[f.id]):'justificatif à demander si applicable')).join('\n')+'\n\n## Sources\n'+d.sources.map(s=>'- '+s.id+' — '+s.role+' — '+(s.filename||'appel')+' — '+(s.t??'')+' ms : '+s.text).join('\n')+'\n\n## Contraintes\n'+JSON.stringify(d.constraints,null,2)+'\n\n## Historique et motifs\n'+JSON.stringify(d.events,null,2);}
 export function importDossier(raw){

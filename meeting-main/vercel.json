@@ -4,10 +4,60 @@
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "Referrer-Policy", "value": "no-referrer" },
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Permissions-Policy", "value": "microphone=(self)" }
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "microphone=(self)"
+        }
       ]
     }
-  ]
+  ],
+  "buildCommand": "node scripts/build.mjs",
+  "outputDirectory": "public",
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/api/page"
+    },
+    {
+      "source": "/index.html",
+      "destination": "/api/page"
+    },
+    {
+      "source": "/login",
+      "destination": "/api/page?space=login"
+    },
+    {
+      "source": "/spaces",
+      "destination": "/api/page?space=spaces"
+    },
+    {
+      "source": "/advisor",
+      "destination": "/api/page?space=advisor"
+    },
+    {
+      "source": "/admin",
+      "destination": "/api/page?space=admin"
+    },
+    {
+      "source": "/responsable",
+      "destination": "/api/page?space=responsable"
+    },
+    {
+      "source": "/responsable/:tail*",
+      "destination": "/api/page?space=responsable&tail=:tail*"
+    }
+  ],
+  "functions": {
+    "api/worker.js": {
+      "maxDuration": 300
+    }
+  }
 }
