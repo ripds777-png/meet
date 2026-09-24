@@ -1,0 +1,893 @@
+[
+  {
+    "id": "F01",
+    "label": "Identité de l’entité",
+    "category": "strategique",
+    "question": "Quelle est la dénomination exacte et le numéro d’immatriculation du porteur ?",
+    "type": "text",
+    "restricted": false,
+    "sources": [
+      {
+        "model": "K09",
+        "section": "1",
+        "page": 1,
+        "language": "FR",
+        "file": "Etape_01_Doc_09_Evaluation_preliminaire/Doc_09_Evaluation_preliminaire_FR.pdf",
+        "sha256": "7d5dedb833a3180fbdaae195a7cde9cba4174bff0b2299e73750b0b169c89a54",
+        "version": "7d5dedb833a3"
+      },
+      {
+        "model": "K13",
+        "section": "1",
+        "page": 1,
+        "language": "FR",
+        "file": "Etape_03_Doc_13_KYC_et_UBO/Doc_13_KYC_et_UBO_FR.pdf",
+        "sha256": "a9fb8bc4df33566c2a09c5e8c3be33ab14aebe65c0817bae9c450ac4fcffa53f",
+        "version": "a9fb8bc4df33"
+      },
+      {
+        "model": "K11",
+        "section": "L01",
+        "page": 2,
+        "language": "FR",
+        "file": "Etape_02_Doc_11_Data_room_checklist/Doc_11_Data_room_checklist_FR.pdf",
+        "sha256": "dd0497a21ec47fc91ea18228cafc46650154bf07bc16e4089549f7955e46162c",
+        "version": "dd0497a21ec4"
+      },
+      {
+        "model": "A07",
+        "section": "1.1",
+        "page": 3,
+        "language": "FR",
+        "file": "Etape_07_Resume_executif/Resume_executif_FR.pdf",
+        "sha256": "e763b86092cfa69f47183d3b1e76228d23ea1b2db0d593e9f844fc5d3f165770",
+        "version": "e763b86092cf"
+      },
+      {
+        "model": "A02",
+        "section": "1",
+        "page": 3,
+        "language": "FR",
+        "file": "Etape_02_Previsions_de_tresorerie/Previsions_de_tresorerie_FR.pdf",
+        "sha256": "31c5c3695c310a8cb8b862f5bf51407d650322ff96049f9d9b87cecece0a6ada",
+        "version": "31c5c3695c31"
+      }
+    ],
+    "priority": "qualification",
+    "proof": "justificatif à examiner, oral non vérifié"
+  },
+  {
+    "id": "F02",
+    "label": "Implantation et activité",
+    "category": "strategique",
+    "question": "Dans quel pays l’entité est-elle établie et quelle activité exerce-t-elle ?",
+    "type": "text",
+    "restricted": false,
+    "sources": [
+      {
+        "model": "K09",
+        "section": "1",
+        "page": 1,
+        "language": "FR",
+        "file": "Etape_01_Doc_09_Evaluation_preliminaire/Doc_09_Evaluation_preliminaire_FR.pdf",
+        "sha256": "7d5dedb833a3180fbdaae195a7cde9cba4174bff0b2299e73750b0b169c89a54",
+        "version": "7d5dedb833a3"
+      },
+      {
+        "model": "K13",
+        "section": "1",
+        "page": 1,
+        "language": "FR",
+        "file": "Etape_03_Doc_13_KYC_et_UBO/Doc_13_KYC_et_UBO_FR.pdf",
+        "sha256": "a9fb8bc4df33566c2a09c5e8c3be33ab14aebe65c0817bae9c450ac4fcffa53f",
+        "version": "a9fb8bc4df33"
+      },
+      {
+        "model": "A07",
+        "section": "1.1",
+        "page": 3,
+        "language": "FR",
+        "file": "Etape_07_Resume_executif/Resume_executif_FR.pdf",
+        "sha256": "e763b86092cfa69f47183d3b1e76228d23ea1b2db0d593e9f844fc5d3f165770",
+        "version": "e763b86092cf"
+      }
+    ],
+    "priority": "qualification",
+    "proof": "justificatif à examiner, oral non vérifié"
+  },
+  {
+    "id": "F03",
+    "label": "Rôle et pouvoir de représentation",
+    "category": "juridique",
+    "question": "Quel est votre rôle et qui peut engager l’entité ?",
+    "type": "text",
+    "restricted": false,
+    "sources": [
+      {
+        "model": "K13",
+        "section": "1",
+        "page": 1,
+        "language": "FR",
+        "file": "Etape_03_Doc_13_KYC_et_UBO/Doc_13_KYC_et_UBO_FR.pdf",
+        "sha256": "a9fb8bc4df33566c2a09c5e8c3be33ab14aebe65c0817bae9c450ac4fcffa53f",
+        "version": "a9fb8bc4df33"
+      },
+      {
+        "model": "K11",
+        "section": "L03",
+        "page": 2,
+        "language": "FR",
+        "file": "Etape_02_Doc_11_Data_room_checklist/Doc_11_Data_room_checklist_FR.pdf",
+        "sha256": "dd0497a21ec47fc91ea18228cafc46650154bf07bc16e4089549f7955e46162c",
+        "version": "dd0497a21ec4"
+      }
+    ],
+    "priority": "qualification",
+    "proof": "justificatif à examiner, oral non vérifié"
+  },
+  {
+    "id": "F04",
+    "label": "Projet et avancement",
+    "category": "strategique",
+    "question": "Quel est le projet et son stade actuel ?",
+    "type": "text",
+    "restricted": false,
+    "sources": [
+      {
+        "model": "K09",
+        "section": "2",
+        "page": 2,
+        "language": "FR",
+        "file": "Etape_01_Doc_09_Evaluation_preliminaire/Doc_09_Evaluation_preliminaire_FR.pdf",
+        "sha256": "7d5dedb833a3180fbdaae195a7cde9cba4174bff0b2299e73750b0b169c89a54",
+        "version": "7d5dedb833a3"
+      },
+      {
+        "model": "K13",
+        "section": "4",
+        "page": 4,
+        "language": "FR",
+        "file": "Etape_03_Doc_13_KYC_et_UBO/Doc_13_KYC_et_UBO_FR.pdf",
+        "sha256": "a9fb8bc4df33566c2a09c5e8c3be33ab14aebe65c0817bae9c450ac4fcffa53f",
+        "version": "a9fb8bc4df33"
+      },
+      {
+        "model": "A07",
+        "section": "1.1",
+        "page": 3,
+        "language": "FR",
+        "file": "Etape_07_Resume_executif/Resume_executif_FR.pdf",
+        "sha256": "e763b86092cfa69f47183d3b1e76228d23ea1b2db0d593e9f844fc5d3f165770",
+        "version": "e763b86092cf"
+      },
+      {
+        "model": "A10",
+        "section": "1",
+        "page": 3,
+        "language": "FR",
+        "file": "Etape_10_Matrice_risques/Matrice_risques_FR.pdf",
+        "sha256": "f059e1ce3645f9393803c2547caea9e8ac9390650805f337ff205a5978796497",
+        "version": "f059e1ce3645"
+      }
+    ],
+    "priority": "qualification",
+    "proof": "justificatif à examiner, oral non vérifié"
+  },
+  {
+    "id": "F05",
+    "label": "Localisation et périmètre",
+    "category": "strategique",
+    "question": "Quels actifs et sites sont concernés ?",
+    "type": "text",
+    "restricted": false,
+    "sources": [
+      {
+        "model": "K09",
+        "section": "2",
+        "page": 2,
+        "language": "FR",
+        "file": "Etape_01_Doc_09_Evaluation_preliminaire/Doc_09_Evaluation_preliminaire_FR.pdf",
+        "sha256": "7d5dedb833a3180fbdaae195a7cde9cba4174bff0b2299e73750b0b169c89a54",
+        "version": "7d5dedb833a3"
+      },
+      {
+        "model": "K17",
+        "section": "1",
+        "page": 1,
+        "language": "FR",
+        "file": "Etape_06_Doc_17_Matrice_due_diligence/Doc_17_Matrice_due_diligence_FR.pdf",
+        "sha256": "139cec12089cd17c3245f3e87e1882b1bac58a064220ffe043cd0abe3daa8081",
+        "version": "139cec12089c"
+      },
+      {
+        "model": "A07",
+        "section": "1.1",
+        "page": 3,
+        "language": "FR",
+        "file": "Etape_07_Resume_executif/Resume_executif_FR.pdf",
+        "sha256": "e763b86092cfa69f47183d3b1e76228d23ea1b2db0d593e9f844fc5d3f165770",
+        "version": "e763b86092cf"
+      },
+      {
+        "model": "A10",
+        "section": "1",
+        "page": 3,
+        "language": "FR",
+        "file": "Etape_10_Matrice_risques/Matrice_risques_FR.pdf",
+        "sha256": "f059e1ce3645f9393803c2547caea9e8ac9390650805f337ff205a5978796497",
+        "version": "f059e1ce3645"
+      }
+    ],
+    "priority": "qualification",
+    "proof": "justificatif à examiner, oral non vérifié"
+  },
+  {
+    "id": "F06",
+    "label": "Maîtrise foncière",
+    "category": "juridique",
+    "question": "Êtes-vous propriétaire ou bénéficiaire d’une promesse, et sous quelles conditions ?",
+    "type": "text",
+    "restricted": false,
+    "sources": [
+      {
+        "model": "K09",
+        "section": "2",
+        "page": 2,
+        "language": "FR",
+        "file": "Etape_01_Doc_09_Evaluation_preliminaire/Doc_09_Evaluation_preliminaire_FR.pdf",
+        "sha256": "7d5dedb833a3180fbdaae195a7cde9cba4174bff0b2299e73750b0b169c89a54",
+        "version": "7d5dedb833a3"
+      },
+      {
+        "model": "K11",
+        "section": "L04-L05",
+        "page": 2,
+        "language": "FR",
+        "file": "Etape_02_Doc_11_Data_room_checklist/Doc_11_Data_room_checklist_FR.pdf",
+        "sha256": "dd0497a21ec47fc91ea18228cafc46650154bf07bc16e4089549f7955e46162c",
+        "version": "dd0497a21ec4"
+      }
+    ],
+    "priority": "qualification",
+    "proof": "justificatif à examiner, oral non vérifié"
+  },
+  {
+    "id": "F07",
+    "label": "Financement demandé",
+    "category": "financier",
+    "question": "Quel montant demandez-vous, dans quelle devise et pour quel emploi ?",
+    "type": "text",
+    "restricted": false,
+    "sources": [
+      {
+        "model": "K09",
+        "section": "1-3",
+        "page": 1,
+        "language": "FR",
+        "file": "Etape_01_Doc_09_Evaluation_preliminaire/Doc_09_Evaluation_preliminaire_FR.pdf",
+        "sha256": "7d5dedb833a3180fbdaae195a7cde9cba4174bff0b2299e73750b0b169c89a54",
+        "version": "7d5dedb833a3"
+      },
+      {
+        "model": "K13",
+        "section": "4",
+        "page": 4,
+        "language": "FR",
+        "file": "Etape_03_Doc_13_KYC_et_UBO/Doc_13_KYC_et_UBO_FR.pdf",
+        "sha256": "a9fb8bc4df33566c2a09c5e8c3be33ab14aebe65c0817bae9c450ac4fcffa53f",
+        "version": "a9fb8bc4df33"
+      },
+      {
+        "model": "A07",
+        "section": "2.1",
+        "page": 3,
+        "language": "FR",
+        "file": "Etape_07_Resume_executif/Resume_executif_FR.pdf",
+        "sha256": "e763b86092cfa69f47183d3b1e76228d23ea1b2db0d593e9f844fc5d3f165770",
+        "version": "e763b86092cf"
+      }
+    ],
+    "priority": "qualification",
+    "proof": "justificatif à examiner, oral non vérifié"
+  },
+  {
+    "id": "F08",
+    "label": "Date du besoin et cause",
+    "category": "financier",
+    "question": "À quelle date précise les fonds sont-ils nécessaires et pourquoi ?",
+    "type": "text",
+    "restricted": false,
+    "sources": [
+      {
+        "model": "K09",
+        "section": "1-2",
+        "page": 1,
+        "language": "FR",
+        "file": "Etape_01_Doc_09_Evaluation_preliminaire/Doc_09_Evaluation_preliminaire_FR.pdf",
+        "sha256": "7d5dedb833a3180fbdaae195a7cde9cba4174bff0b2299e73750b0b169c89a54",
+        "version": "7d5dedb833a3"
+      },
+      {
+        "model": "K17",
+        "section": "6",
+        "page": 6,
+        "language": "FR",
+        "file": "Etape_06_Doc_17_Matrice_due_diligence/Doc_17_Matrice_due_diligence_FR.pdf",
+        "sha256": "139cec12089cd17c3245f3e87e1882b1bac58a064220ffe043cd0abe3daa8081",
+        "version": "139cec12089c"
+      },
+      {
+        "model": "A07",
+        "section": "1.1",
+        "page": 3,
+        "language": "FR",
+        "file": "Etape_07_Resume_executif/Resume_executif_FR.pdf",
+        "sha256": "e763b86092cfa69f47183d3b1e76228d23ea1b2db0d593e9f844fc5d3f165770",
+        "version": "e763b86092cf"
+      },
+      {
+        "model": "A02",
+        "section": "1",
+        "page": 3,
+        "language": "FR",
+        "file": "Etape_02_Previsions_de_tresorerie/Previsions_de_tresorerie_FR.pdf",
+        "sha256": "31c5c3695c310a8cb8b862f5bf51407d650322ff96049f9d9b87cecece0a6ada",
+        "version": "31c5c3695c31"
+      }
+    ],
+    "priority": "qualification",
+    "proof": "justificatif à examiner, oral non vérifié"
+  },
+  {
+    "id": "F09",
+    "label": "Jalons et dépendances",
+    "category": "strategique",
+    "question": "Quels jalons conditionnent le calendrier ?",
+    "type": "text",
+    "restricted": false,
+    "sources": [
+      {
+        "model": "K09",
+        "section": "2",
+        "page": 2,
+        "language": "FR",
+        "file": "Etape_01_Doc_09_Evaluation_preliminaire/Doc_09_Evaluation_preliminaire_FR.pdf",
+        "sha256": "7d5dedb833a3180fbdaae195a7cde9cba4174bff0b2299e73750b0b169c89a54",
+        "version": "7d5dedb833a3"
+      },
+      {
+        "model": "K17",
+        "section": "6",
+        "page": 6,
+        "language": "FR",
+        "file": "Etape_06_Doc_17_Matrice_due_diligence/Doc_17_Matrice_due_diligence_FR.pdf",
+        "sha256": "139cec12089cd17c3245f3e87e1882b1bac58a064220ffe043cd0abe3daa8081",
+        "version": "139cec12089c"
+      },
+      {
+        "model": "A02",
+        "section": "1",
+        "page": 3,
+        "language": "FR",
+        "file": "Etape_02_Previsions_de_tresorerie/Previsions_de_tresorerie_FR.pdf",
+        "sha256": "31c5c3695c310a8cb8b862f5bf51407d650322ff96049f9d9b87cecece0a6ada",
+        "version": "31c5c3695c31"
+      }
+    ],
+    "priority": "qualification",
+    "proof": "justificatif à examiner, oral non vérifié"
+  },
+  {
+    "id": "F10",
+    "label": "Coûts détaillés",
+    "category": "financier",
+    "question": "Quel est le coût total, par poste et devise, déjà payé et restant à payer ?",
+    "type": "rows",
+    "restricted": false,
+    "sources": [
+      {
+        "model": "K09",
+        "section": "3",
+        "page": 3,
+        "language": "FR",
+        "file": "Etape_01_Doc_09_Evaluation_preliminaire/Doc_09_Evaluation_preliminaire_FR.pdf",
+        "sha256": "7d5dedb833a3180fbdaae195a7cde9cba4174bff0b2299e73750b0b169c89a54",
+        "version": "7d5dedb833a3"
+      },
+      {
+        "model": "K11",
+        "section": "F03",
+        "page": 3,
+        "language": "FR",
+        "file": "Etape_02_Doc_11_Data_room_checklist/Doc_11_Data_room_checklist_FR.pdf",
+        "sha256": "dd0497a21ec47fc91ea18228cafc46650154bf07bc16e4089549f7955e46162c",
+        "version": "dd0497a21ec4"
+      },
+      {
+        "model": "A06",
+        "section": "3",
+        "page": 4,
+        "language": "FR",
+        "file": "Etape_06_Sources_et_emplois/Sources_et_emplois_FR.pdf",
+        "sha256": "fae511f15b4bedbd74be4ce6b468bcaf754a0cc8684b0fc69aeca9b2ca528f5e",
+        "version": "fae511f15b4b"
+      },
+      {
+        "model": "A07",
+        "section": "2.1",
+        "page": 3,
+        "language": "FR",
+        "file": "Etape_07_Resume_executif/Resume_executif_FR.pdf",
+        "sha256": "e763b86092cfa69f47183d3b1e76228d23ea1b2db0d593e9f844fc5d3f165770",
+        "version": "e763b86092cf"
+      }
+    ],
+    "priority": "qualification",
+    "proof": "justificatif à examiner, oral non vérifié"
+  },
+  {
+    "id": "F11",
+    "label": "Ressources et disponibilité",
+    "category": "financier",
+    "question": "Quels apports sont reçus, engagés ou simplement envisagés, par entité et devise ?",
+    "type": "rows",
+    "restricted": false,
+    "sources": [
+      {
+        "model": "K09",
+        "section": "3",
+        "page": 3,
+        "language": "FR",
+        "file": "Etape_01_Doc_09_Evaluation_preliminaire/Doc_09_Evaluation_preliminaire_FR.pdf",
+        "sha256": "7d5dedb833a3180fbdaae195a7cde9cba4174bff0b2299e73750b0b169c89a54",
+        "version": "7d5dedb833a3"
+      },
+      {
+        "model": "K11",
+        "section": "F04",
+        "page": 3,
+        "language": "FR",
+        "file": "Etape_02_Doc_11_Data_room_checklist/Doc_11_Data_room_checklist_FR.pdf",
+        "sha256": "dd0497a21ec47fc91ea18228cafc46650154bf07bc16e4089549f7955e46162c",
+        "version": "dd0497a21ec4"
+      },
+      {
+        "model": "A06",
+        "section": "2",
+        "page": 3,
+        "language": "FR",
+        "file": "Etape_06_Sources_et_emplois/Sources_et_emplois_FR.pdf",
+        "sha256": "fae511f15b4bedbd74be4ce6b468bcaf754a0cc8684b0fc69aeca9b2ca528f5e",
+        "version": "fae511f15b4b"
+      },
+      {
+        "model": "A07",
+        "section": "2.1",
+        "page": 3,
+        "language": "FR",
+        "file": "Etape_07_Resume_executif/Resume_executif_FR.pdf",
+        "sha256": "e763b86092cfa69f47183d3b1e76228d23ea1b2db0d593e9f844fc5d3f165770",
+        "version": "e763b86092cf"
+      }
+    ],
+    "priority": "qualification",
+    "proof": "justificatif à examiner, oral non vérifié"
+  },
+  {
+    "id": "F12",
+    "label": "Dettes existantes",
+    "category": "financier",
+    "question": "Quelles dettes existent, avec leurs montants, devises et échéances ?",
+    "type": "rows",
+    "restricted": false,
+    "sources": [
+      {
+        "model": "K09",
+        "section": "3",
+        "page": 3,
+        "language": "FR",
+        "file": "Etape_01_Doc_09_Evaluation_preliminaire/Doc_09_Evaluation_preliminaire_FR.pdf",
+        "sha256": "7d5dedb833a3180fbdaae195a7cde9cba4174bff0b2299e73750b0b169c89a54",
+        "version": "7d5dedb833a3"
+      },
+      {
+        "model": "K11",
+        "section": "F05",
+        "page": 3,
+        "language": "FR",
+        "file": "Etape_02_Doc_11_Data_room_checklist/Doc_11_Data_room_checklist_FR.pdf",
+        "sha256": "dd0497a21ec47fc91ea18228cafc46650154bf07bc16e4089549f7955e46162c",
+        "version": "dd0497a21ec4"
+      }
+    ],
+    "priority": "qualification",
+    "proof": "justificatif à examiner, oral non vérifié"
+  },
+  {
+    "id": "F13",
+    "label": "Revenus historiques et prévisionnels",
+    "category": "financier",
+    "question": "Quels revenus sont réalisés ou prévus, pour quelle période et devise ?",
+    "type": "rows",
+    "restricted": false,
+    "sources": [
+      {
+        "model": "K13",
+        "section": "4",
+        "page": 4,
+        "language": "FR",
+        "file": "Etape_03_Doc_13_KYC_et_UBO/Doc_13_KYC_et_UBO_FR.pdf",
+        "sha256": "a9fb8bc4df33566c2a09c5e8c3be33ab14aebe65c0817bae9c450ac4fcffa53f",
+        "version": "a9fb8bc4df33"
+      },
+      {
+        "model": "K11",
+        "section": "F01-F02-F06",
+        "page": 3,
+        "language": "FR",
+        "file": "Etape_02_Doc_11_Data_room_checklist/Doc_11_Data_room_checklist_FR.pdf",
+        "sha256": "dd0497a21ec47fc91ea18228cafc46650154bf07bc16e4089549f7955e46162c",
+        "version": "dd0497a21ec4"
+      },
+      {
+        "model": "A02",
+        "section": "2",
+        "page": 3,
+        "language": "FR",
+        "file": "Etape_02_Previsions_de_tresorerie/Previsions_de_tresorerie_FR.pdf",
+        "sha256": "31c5c3695c310a8cb8b862f5bf51407d650322ff96049f9d9b87cecece0a6ada",
+        "version": "31c5c3695c31"
+      }
+    ],
+    "priority": "qualification",
+    "proof": "justificatif à examiner, oral non vérifié"
+  },
+  {
+    "id": "F14",
+    "label": "Équipe et expérience",
+    "category": "strategique",
+    "question": "Qui porte le projet et quelle expérience comparable a l’équipe ?",
+    "type": "text",
+    "restricted": false,
+    "sources": [
+      {
+        "model": "K09",
+        "section": "2",
+        "page": 2,
+        "language": "FR",
+        "file": "Etape_01_Doc_09_Evaluation_preliminaire/Doc_09_Evaluation_preliminaire_FR.pdf",
+        "sha256": "7d5dedb833a3180fbdaae195a7cde9cba4174bff0b2299e73750b0b169c89a54",
+        "version": "7d5dedb833a3"
+      },
+      {
+        "model": "K13",
+        "section": "1",
+        "page": 1,
+        "language": "FR",
+        "file": "Etape_03_Doc_13_KYC_et_UBO/Doc_13_KYC_et_UBO_FR.pdf",
+        "sha256": "a9fb8bc4df33566c2a09c5e8c3be33ab14aebe65c0817bae9c450ac4fcffa53f",
+        "version": "a9fb8bc4df33"
+      }
+    ],
+    "priority": "qualification",
+    "proof": "justificatif à examiner, oral non vérifié"
+  },
+  {
+    "id": "F15",
+    "label": "Actionnariat et contrôle",
+    "category": "juridique",
+    "question": "Comment sont répartis le capital, les votes et le contrôle ?",
+    "type": "text",
+    "restricted": false,
+    "sources": [
+      {
+        "model": "K13",
+        "section": "2",
+        "page": 2,
+        "language": "FR",
+        "file": "Etape_03_Doc_13_KYC_et_UBO/Doc_13_KYC_et_UBO_FR.pdf",
+        "sha256": "a9fb8bc4df33566c2a09c5e8c3be33ab14aebe65c0817bae9c450ac4fcffa53f",
+        "version": "a9fb8bc4df33"
+      },
+      {
+        "model": "K11",
+        "section": "L02",
+        "page": 2,
+        "language": "FR",
+        "file": "Etape_02_Doc_11_Data_room_checklist/Doc_11_Data_room_checklist_FR.pdf",
+        "sha256": "dd0497a21ec47fc91ea18228cafc46650154bf07bc16e4089549f7955e46162c",
+        "version": "dd0497a21ec4"
+      }
+    ],
+    "priority": "qualification",
+    "proof": "justificatif à examiner, oral non vérifié"
+  },
+  {
+    "id": "F16",
+    "label": "Autorisations",
+    "category": "juridique",
+    "question": "Quelles autorisations sont obtenues, en cours ou contestées ?",
+    "type": "text",
+    "restricted": false,
+    "sources": [
+      {
+        "model": "K09",
+        "section": "2",
+        "page": 2,
+        "language": "FR",
+        "file": "Etape_01_Doc_09_Evaluation_preliminaire/Doc_09_Evaluation_preliminaire_FR.pdf",
+        "sha256": "7d5dedb833a3180fbdaae195a7cde9cba4174bff0b2299e73750b0b169c89a54",
+        "version": "7d5dedb833a3"
+      },
+      {
+        "model": "K11",
+        "section": "T02",
+        "page": 4,
+        "language": "FR",
+        "file": "Etape_02_Doc_11_Data_room_checklist/Doc_11_Data_room_checklist_FR.pdf",
+        "sha256": "dd0497a21ec47fc91ea18228cafc46650154bf07bc16e4089549f7955e46162c",
+        "version": "dd0497a21ec4"
+      }
+    ],
+    "priority": "qualification",
+    "proof": "justificatif à examiner, oral non vérifié"
+  },
+  {
+    "id": "F17",
+    "label": "Contrats et contraintes",
+    "category": "juridique",
+    "question": "Quels contrats clés sont signés et quelles conditions restent ouvertes ?",
+    "type": "text",
+    "restricted": false,
+    "sources": [
+      {
+        "model": "K09",
+        "section": "2",
+        "page": 2,
+        "language": "FR",
+        "file": "Etape_01_Doc_09_Evaluation_preliminaire/Doc_09_Evaluation_preliminaire_FR.pdf",
+        "sha256": "7d5dedb833a3180fbdaae195a7cde9cba4174bff0b2299e73750b0b169c89a54",
+        "version": "7d5dedb833a3"
+      },
+      {
+        "model": "K11",
+        "section": "L07",
+        "page": 2,
+        "language": "FR",
+        "file": "Etape_02_Doc_11_Data_room_checklist/Doc_11_Data_room_checklist_FR.pdf",
+        "sha256": "dd0497a21ec47fc91ea18228cafc46650154bf07bc16e4089549f7955e46162c",
+        "version": "dd0497a21ec4"
+      }
+    ],
+    "priority": "qualification",
+    "proof": "justificatif à examiner, oral non vérifié"
+  },
+  {
+    "id": "F18",
+    "label": "Assurances",
+    "category": "juridique",
+    "question": "Quelles assurances couvrent actuellement le projet ?",
+    "type": "text",
+    "restricted": false,
+    "sources": [
+      {
+        "model": "K11",
+        "section": "T09",
+        "page": 4,
+        "language": "FR",
+        "file": "Etape_02_Doc_11_Data_room_checklist/Doc_11_Data_room_checklist_FR.pdf",
+        "sha256": "dd0497a21ec47fc91ea18228cafc46650154bf07bc16e4089549f7955e46162c",
+        "version": "dd0497a21ec4"
+      },
+      {
+        "model": "K17",
+        "section": "T08",
+        "page": 4,
+        "language": "FR",
+        "file": "Etape_06_Doc_17_Matrice_due_diligence/Doc_17_Matrice_due_diligence_FR.pdf",
+        "sha256": "139cec12089cd17c3245f3e87e1882b1bac58a064220ffe043cd0abe3daa8081",
+        "version": "139cec12089c"
+      }
+    ],
+    "priority": "qualification",
+    "proof": "justificatif à examiner, oral non vérifié"
+  },
+  {
+    "id": "F19",
+    "label": "Origine économique des fonds",
+    "category": "financier",
+    "question": "Quelle est l’origine économique documentée des fonds ?",
+    "type": "text",
+    "restricted": true,
+    "sources": [
+      {
+        "model": "K13",
+        "section": "4",
+        "page": 4,
+        "language": "FR",
+        "file": "Etape_03_Doc_13_KYC_et_UBO/Doc_13_KYC_et_UBO_FR.pdf",
+        "sha256": "a9fb8bc4df33566c2a09c5e8c3be33ab14aebe65c0817bae9c450ac4fcffa53f",
+        "version": "a9fb8bc4df33"
+      },
+      {
+        "model": "K11",
+        "section": "C02",
+        "page": 5,
+        "language": "FR",
+        "file": "Etape_02_Doc_11_Data_room_checklist/Doc_11_Data_room_checklist_FR.pdf",
+        "sha256": "dd0497a21ec47fc91ea18228cafc46650154bf07bc16e4089549f7955e46162c",
+        "version": "dd0497a21ec4"
+      }
+    ],
+    "priority": "future",
+    "proof": "validation spécialisée requise"
+  },
+  {
+    "id": "F20",
+    "label": "Résidences fiscales",
+    "category": "juridique",
+    "question": "Quelles résidences fiscales sont déclarées dans le formulaire habilité ?",
+    "type": "text",
+    "restricted": true,
+    "sources": [
+      {
+        "model": "K16",
+        "section": "2",
+        "page": 2,
+        "language": "FR",
+        "file": "Etape_05_Doc_16_FATCA_CRS/Doc_16_FATCA_CRS_FR.pdf",
+        "sha256": "e871bc5630b669da2613642dc65e2c074071e582efe01c721c6fd465ea439009",
+        "version": "e871bc5630b6"
+      },
+      {
+        "model": "K11",
+        "section": "C04",
+        "page": 5,
+        "language": "FR",
+        "file": "Etape_02_Doc_11_Data_room_checklist/Doc_11_Data_room_checklist_FR.pdf",
+        "sha256": "dd0497a21ec47fc91ea18228cafc46650154bf07bc16e4089549f7955e46162c",
+        "version": "dd0497a21ec4"
+      }
+    ],
+    "priority": "future",
+    "proof": "validation spécialisée requise"
+  },
+  {
+    "id": "F21",
+    "label": "Fonctions publiques",
+    "category": "juridique",
+    "question": "Une déclaration doit-elle être recueillie par la conformité habilitée ?",
+    "type": "text",
+    "restricted": true,
+    "sources": [
+      {
+        "model": "K13",
+        "section": "3",
+        "page": 3,
+        "language": "FR",
+        "file": "Etape_03_Doc_13_KYC_et_UBO/Doc_13_KYC_et_UBO_FR.pdf",
+        "sha256": "a9fb8bc4df33566c2a09c5e8c3be33ab14aebe65c0817bae9c450ac4fcffa53f",
+        "version": "a9fb8bc4df33"
+      },
+      {
+        "model": "K15",
+        "section": "4",
+        "page": 4,
+        "language": "FR",
+        "file": "Etape_04_Doc_15_Conformite_sanctions/Doc_15_Conformite_sanctions_FR.pdf",
+        "sha256": "4769456c47039495b9a3d69c542f968abf90e81601e78fb4b8ad8ab86d1509c1",
+        "version": "4769456c4703"
+      }
+    ],
+    "priority": "future",
+    "proof": "validation spécialisée requise"
+  },
+  {
+    "id": "F22",
+    "label": "Pièces disponibles",
+    "category": "strategique",
+    "question": "Quelles pièces pouvez-vous fournir et lesquelles sont indisponibles, pour quelle raison ?",
+    "type": "text",
+    "restricted": false,
+    "sources": [
+      {
+        "model": "K11",
+        "section": "6",
+        "page": 6,
+        "language": "FR",
+        "file": "Etape_02_Doc_11_Data_room_checklist/Doc_11_Data_room_checklist_FR.pdf",
+        "sha256": "dd0497a21ec47fc91ea18228cafc46650154bf07bc16e4089549f7955e46162c",
+        "version": "dd0497a21ec4"
+      },
+      {
+        "model": "K13",
+        "section": "5",
+        "page": 5,
+        "language": "FR",
+        "file": "Etape_03_Doc_13_KYC_et_UBO/Doc_13_KYC_et_UBO_FR.pdf",
+        "sha256": "a9fb8bc4df33566c2a09c5e8c3be33ab14aebe65c0817bae9c450ac4fcffa53f",
+        "version": "a9fb8bc4df33"
+      },
+      {
+        "model": "A07",
+        "section": "5.1",
+        "page": 5,
+        "language": "FR",
+        "file": "Etape_07_Resume_executif/Resume_executif_FR.pdf",
+        "sha256": "e763b86092cfa69f47183d3b1e76228d23ea1b2db0d593e9f844fc5d3f165770",
+        "version": "e763b86092cf"
+      }
+    ],
+    "priority": "qualification",
+    "proof": "justificatif à examiner, oral non vérifié"
+  },
+  {
+    "id": "F23",
+    "label": "Responsables et échéances",
+    "category": "strategique",
+    "question": "Qui transmettra chaque pièce, et à quelle date ?",
+    "type": "text",
+    "restricted": false,
+    "sources": [
+      {
+        "model": "K11",
+        "section": "6",
+        "page": 6,
+        "language": "FR",
+        "file": "Etape_02_Doc_11_Data_room_checklist/Doc_11_Data_room_checklist_FR.pdf",
+        "sha256": "dd0497a21ec47fc91ea18228cafc46650154bf07bc16e4089549f7955e46162c",
+        "version": "dd0497a21ec4"
+      },
+      {
+        "model": "K13",
+        "section": "5",
+        "page": 5,
+        "language": "FR",
+        "file": "Etape_03_Doc_13_KYC_et_UBO/Doc_13_KYC_et_UBO_FR.pdf",
+        "sha256": "a9fb8bc4df33566c2a09c5e8c3be33ab14aebe65c0817bae9c450ac4fcffa53f",
+        "version": "a9fb8bc4df33"
+      },
+      {
+        "model": "A07",
+        "section": "5.1",
+        "page": 5,
+        "language": "FR",
+        "file": "Etape_07_Resume_executif/Resume_executif_FR.pdf",
+        "sha256": "e763b86092cfa69f47183d3b1e76228d23ea1b2db0d593e9f844fc5d3f165770",
+        "version": "e763b86092cf"
+      }
+    ],
+    "priority": "qualification",
+    "proof": "justificatif à examiner, oral non vérifié"
+  },
+  {
+    "id": "F24",
+    "label": "Origine de la relation",
+    "category": "strategique",
+    "question": "Qui vous a mis en relation et à quel titre ?",
+    "type": "text",
+    "restricted": false,
+    "sources": [
+      {
+        "model": "K09",
+        "section": "1",
+        "page": 1,
+        "language": "FR",
+        "file": "Etape_01_Doc_09_Evaluation_preliminaire/Doc_09_Evaluation_preliminaire_FR.pdf",
+        "sha256": "7d5dedb833a3180fbdaae195a7cde9cba4174bff0b2299e73750b0b169c89a54",
+        "version": "7d5dedb833a3"
+      },
+      {
+        "model": "K15",
+        "section": "5",
+        "page": 5,
+        "language": "FR",
+        "file": "Etape_04_Doc_15_Conformite_sanctions/Doc_15_Conformite_sanctions_FR.pdf",
+        "sha256": "4769456c47039495b9a3d69c542f968abf90e81601e78fb4b8ad8ab86d1509c1",
+        "version": "4769456c4703"
+      }
+    ],
+    "priority": "qualification",
+    "proof": "justificatif à examiner, oral non vérifié"
+  }
+]
