@@ -1,0 +1,14 @@
+import {session,hasRole,access,configured} from '../server/platform.js';
+import {advisor,portal} from '../server/pages.js';
+export const config={runtime:'edge'};
+const headers={'content-type':'text/html; charset=utf-8','cache-control':'private, no-store','x-content-type-options':'nosniff','referrer-policy':'no-referrer','content-security-policy':"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' wss://api.deepgram.com; img-src 'self' data:; media-src 'self' blob:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"};
+const redirect=path=>new Response(null,{status:303,headers:{location:path,'cache-control':'private, no-store'}});
+export default async function handler(req){const url=new URL(req.url),space=url.searchParams.get('space')||'',tail=url.searchParams.get('tail')||'';let p;
+ if(!configured())return new Response('<!doctype html><html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/platform.css"><main><section><h1>Activation de la plateforme en attente</h1><p>La base privée, la migration et le premier administrateur doivent être configurés. Aucun compte de démonstration ne donne accès aux données.</p><p>Les anciens dossiers locaux restent conservés pour un import contrôlé.</p></section></main></html>',{status:503,headers});
+ try{p=await session(req,{allowPasswordChange:true});}catch(e){if(e.status!==401)return new Response('Service de connexion temporairement indisponible.',{status:503,headers});if(space!=='login')return redirect('/login');}
+ if(p?.must_change_password&&space!=='login')return redirect('/login?change=1');
+ if(space==='login'&&p&&!p.must_change_password)return redirect('/');
+ if(!space){if(!p)return redirect('/login');return redirect(p.roles.length===1?'/'+p.roles[0]:'/spaces');}
+ if(!['login','spaces','advisor','responsable','admin'].includes(space))return new Response('Page introuvable',{status:404,headers});
+ if(['advisor','responsable','admin'].includes(space))try{hasRole(p,space);if(space==='responsable'&&tail){const match=tail.match(/^clients\/([a-f0-9-]+)\/dossiers\/([a-f0-9-]+)\/(overview|calls|facts|actions|constraints|data-room|history)$/);if(!match)return new Response('Page introuvable',{status:404,headers});const d=await access(p,match[2]);if(d.client_id!==match[1])return new Response('Accès refusé',{status:403,headers});}if(space==='advisor'&&url.searchParams.get('dossier'))await access(p,url.searchParams.get('dossier'),'call');}catch{return new Response('Accès refusé à cet espace ou dossier.',{status:403,headers});}
+ const template=space==='advisor'?advisor:portal;const profile=JSON.stringify(p||null).replace(/</g,'\\u003c');return new Response(template.replace('<head>','<head><script>window.MEET_PROFILE='+profile+';</script>'),{headers});}
