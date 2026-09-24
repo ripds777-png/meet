@@ -333,6 +333,7 @@
   <div class="stage">
     <div>
       <div class="msg warn" id="callWarn"></div>
+      <div class="msg warn" id="aiStatus" role="status" aria-live="polite"></div>
       <div class="ask" id="askBox" hidden><span class="lbl">Il vous demande</span><span id="askTxt"></span></div>
 
       <!-- Panneau d'introduction : AUCUNE question ici -->
@@ -682,10 +683,11 @@
   const elapsedNow = () => S.elapsedMs + (S.listening ? Date.now() - S.lastResume : 0);
   function whoOf(sp) {
     if (sp === null || sp === undefined) return 'unk';
-    if (S.speakerMe === null || S.speakerMe === undefined) return 'unk';
+    if (S.speakerMe === null || S.speakerMe === undefined) return 'speaker-' + sp;
     return sp === S.speakerMe ? 'me' : 'them';
   }
-  const whoLabel = (w) => (w === 'me' ? 'Advisor' : w === 'them' ? 'Client' : 'Incertain');
+  const whoLabel = (w) => (w === 'me' ? 'Advisor' : w === 'them' ? 'Client' :
+    w.indexOf('speaker-') === 0 ? 'Locuteur ' + w.slice(8) + ' (rôle à confirmer)' : 'Incertain');
 
   function fullText() {
     return S.segments.map((s) => '[' + mmss(s.t) + '] ' + whoLabel(whoOf(s.sp)) + ' : ' + s.text).join('\n');
@@ -835,7 +837,10 @@
 
   $('btnPrev').addEventListener('click', () => {
     const p = S.history.pop(); if (!p) return;
-    S.current = p; S.locked = false; S.stale = false; renderPrompter();
+    cancelSelect();
+    S.current = p; S.pending = null; S.variants = [];
+    $('variantBox').hidden = true;
+    S.locked = false; S.stale = false; renderPrompter(); persist();
   });
   $('btnAuto').addEventListener('click', () => {
     S.pausedAuto = !S.pausedAuto;
@@ -849,6 +854,12 @@
   $('btnVariants').addEventListener('click', () => {
     if (!S.variants.length) { requestSelect('variantes', { intent:'variantes' }); return; }
     $('variantBox').hidden = !$('variantBox').hidden;
+  });
+  $('variantBox').addEventListener('click', (e) => {
+    const button = e.target.closest('[data-variant]');
+    if (!button) return;
+    const iv = S.variants[Number(button.dataset.variant)];
+    if (iv) { cancelSelect(); setCurrent(iv, true); }
   });
 
   /* ------------------------------ file ---------------------------------- */
@@ -864,23 +875,36 @@
   const EXPLICIT = ['approfondir','avancer','variantes','sortie-intro','manuel',
                     'categorie-suivante','proposer-synthese'];
   const isExplicit = (r) => EXPLICIT.indexOf(r) !== -1 || /^categorie-/.test(r || '');
+  function cancelSelect() {
+    clearTimeout(S.gapTimer); S.queuedExplicit = false;
+    if (S.selectInflight) S.selectInflight.abort();
+    S.selectInflight = null; S.selectExplicit = false;
+    $('aiStatus').textContent = '';
+  }
 
   function requestSelect(reason, extra) {
     if (!S.started) return;
+    const explicit = isExplicit(reason);
+    // Une fin de tour automatique ne doit pas annuler un clic de l'advisor.
+    if (!explicit && (S.queuedExplicit || S.selectExplicit)) return;
     // En pause auto on continue d'appeler : la préparation ne s'arrête jamais,
     // c'est seulement l'affichage qui se fige (réf. 8.9).
     const wait = SELECT_MIN_GAP - (Date.now() - S.lastSelectAt);
     if (wait > 0 && reason !== 'sortie-intro') {
       clearTimeout(S.gapTimer);
-      S.gapTimer = setTimeout(() => requestSelect(reason, extra), wait + 20);
+      S.queuedExplicit = explicit;
+      S.gapTimer = setTimeout(() => { S.queuedExplicit = false; requestSelect(reason, extra); }, wait + 20);
       return;
     }
+    clearTimeout(S.gapTimer); S.queuedExplicit = false;
     runSelect(reason, extra);
   }
 
   async function runSelect(reason, extra) {
     if (S.selectInflight) { try { S.selectInflight.abort(); } catch(e){} }
     const ctrl = new AbortController(); S.selectInflight = ctrl;
+    S.selectExplicit = isExplicit(reason);
+    $('aiStatus').textContent = 'Préparation de la suggestion…';
     S.lastSelectAt = Date.now();
     const t0 = Date.now(); let got = false;
     try {
@@ -894,12 +918,20 @@
         categorie: S.categorie,
         temps: { elapsed: Math.round(elapsedNow()/60000), total: S.cfg.duree, phase: currentPhaseLabel() },
         introState: S.introState,
+        introForced: S.introForced,
+        current: S.current ? { texte: S.current.texte, categorie: S.current.categorie } : null,
         clientQuestion: S.ask || ''
       }, extra || {}), (t, first) => { if (first && !got) { got = true; recordLatency(Date.now() - t0); } }, ctrl.signal);
-      if (S.selectInflight === ctrl) applySelect(d || {}, reason);
+      if (S.selectInflight === ctrl) {
+        $('aiStatus').textContent = '';
+        applySelect(d || {}, reason);
+        if (S.phase !== 'intro' && !(d && (d.intervention || (d.variants && d.variants.length))))
+          $('aiStatus').textContent = 'Aucune suggestion reçue. Réessayez avec « Avancer ».';
+      }
     } catch (e) {
-      if (e && e.name !== 'AbortError') { /* silencieux pendant l'appel */ }
-    } finally { if (S.selectInflight === ctrl) S.selectInflight = null; }
+      if (S.selectInflight === ctrl && e && e.name !== 'AbortError')
+        $('aiStatus').textContent = 'Suggestions indisponibles : ' + e.message;
+    } finally { if (S.selectInflight === ctrl) { S.selectInflight = null; S.selectExplicit = false; } }
   }
 
   function applySelect(d, reason) {
@@ -930,7 +962,7 @@
     (d.resolvedIds || []).forEach((id) => {
       const q = S.questions.find((x) => x.id === id);
       // Réponse spontanée : résolue sans avoir été posée.
-      if (q) { q.statut = 'résolue'; q.spontanee = (q.statut !== 'posée'); }
+      if (q) { if (q.statut !== 'résolue') q.spontanee = (q.statut !== 'posée'); q.statut = 'résolue'; }
     });
     (d.partialIds || []).forEach((id) => { const q = S.questions.find((x) => x.id === id); if (q && q.statut !== 'résolue') q.statut = 'partielle'; });
     renderQueue();
@@ -948,18 +980,18 @@
       maybeLeaveIntro(reason);
       return;
     }
+    if (reason === 'variantes') {
+      S.variants = Array.isArray(d.variants) && d.variants.length ? d.variants : (d.intervention ? [d.intervention] : []);
+      $('variantBox').innerHTML = S.variants.map((v, i) =>
+        '<button class="btn" data-variant="' + i + '" style="display:block;margin:8px 0;text-align:left">' + esc(v.texte) + '</button>').join('');
+      $('variantBox').hidden = !S.variants.length;
+      return;
+    }
     if (d.intervention) {
       const forced = isExplicit(reason);
       if (S.pausedAuto && !forced) {
         // Prêt à afficher, mais rien ne défile tant que l'advisor n'a pas repris.
         S.pending = d.intervention; $('pPending').hidden = false;
-        return;
-      }
-      if (reason === 'variantes') {
-        S.variants = [d.intervention];
-        $('variantBox').innerHTML = S.variants.map((v) =>
-          '<div style="padding:8px 0;border-top:1px solid var(--line)">' + esc(v.texte) + '</div>').join('');
-        $('variantBox').hidden = false;
         return;
       }
       setCurrent(d.intervention, forced);
@@ -1109,7 +1141,7 @@
   /* repli Web Speech */
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   const wsr = { rec:null, manual:false, timer:null };
-  function useWebSpeech() {
+  function useWebSpeech(reason) {
     if (!SR) { fatal('Deepgram est injoignable et ce navigateur ne gère pas la reconnaissance vocale. Utilisez Chrome.'); return false; }
     stopAudio(); S.engine = 'navigateur'; wsr.manual = false;
     const rec = new SR(); rec.lang = 'fr-FR'; rec.continuous = true; rec.interimResults = true;
@@ -1125,7 +1157,7 @@
     wsr.rec = rec;
     try { rec.start(); } catch(e){}
     // Sans diarisation : on ne peut pas distinguer les tours de parole.
-    warn('Moteur du navigateur : les locuteurs ne sont pas séparés. Les segments sont marqués « Incertain ».');
+    warn((reason ? 'Deepgram indisponible : ' + reason + ' — ' : '') + 'Moteur du navigateur : les locuteurs ne sont pas séparés. Les segments sont marqués « Incertain ».');
     return true;
   }
 
@@ -1277,17 +1309,17 @@
       const docs = S.docs.filter((d) => d.extractable).map((d) => d.name + ' :\n' + d.text).join('\n\n');
       const p = await api({ mode:'plan', duree: S.cfg.duree, documents: docs });
       if (p && p.phases) { S.plan = p; S.reserve = p.reserve || []; renderFrieze(); tick(); }
-    } catch (e) { warn('Plan non généré (' + esc(e.message) + ') — l’appel continue.'); }
+    } catch (e) { $('aiStatus').textContent = 'Plan non généré : ' + e.message; }
 
     // Audio
     try {
       if (!dg.stream) dg.stream = await openMic();
-      if (!dg.token) dg.token = await dgToken();
+      dg.proto = 0;
+      dg.token = await dgToken();
       await openSocket(onCallMsg);
       S.engine = 'Deepgram nova-3';
     } catch (e) {
-      warn('Deepgram indisponible (' + esc(e.message) + ') — bascule sur le moteur du navigateur.');
-      useWebSpeech();
+      useWebSpeech(e.message);
     }
 
     clearInterval(S.prepTimer); S.prepTimer = setInterval(runPrepare, PREPARE_EVERY);
@@ -1301,7 +1333,10 @@
       // Fin de tour : condition de sortie d'intro, et moment de proposer la suite.
       const last = S.segments[S.segments.length - 1];
       if (last && whoOf(last.sp) === 'them') awaitingPause = true;
-      if (S.phase === 'intro') { requestSelect('utterance'); maybeLeaveIntro('auto'); }
+      if (S.phase === 'intro') {
+        if (last && last.sp !== null && S.speakerMe === null) awaitingPause = true;
+        requestSelect('utterance'); maybeLeaveIntro('auto');
+      }
       else {
         // Une fin de tour est une pause naturelle : c'est le moment prévu pour
         // remplacer l'intervention lue. Le verrou ne protège que la lecture.
@@ -1315,7 +1350,19 @@
     if (!alt || !alt.transcript) return;
     const words = alt.words || [];
     const sp = words.length ? words[0].speaker : null;
-    if (m.is_final) { setInterim('', sp); addSegment(alt.transcript, sp); }
+    if (m.is_final) {
+      setInterim('', sp);
+      // Un résultat Deepgram peut contenir plusieurs tours de parole.
+      const groups = [];
+      words.forEach((w) => {
+        const speaker = w.speaker === undefined ? null : w.speaker;
+        let group = groups[groups.length - 1];
+        if (!group || group.sp !== speaker) { group = { sp: speaker, words: [] }; groups.push(group); }
+        group.words.push(w.punctuated_word || w.word);
+      });
+      if (groups.length) groups.forEach((g) => addSegment(g.words.join(' '), g.sp));
+      else addSegment(alt.transcript, null);
+    }
     else setInterim(alt.transcript, sp);
   }
 
@@ -1328,7 +1375,7 @@
   });
   $('btnNextCat').addEventListener('click', () => {
     const i = CAT_ORDER.indexOf(S.categorie);
-    if (i === CAT_ORDER.length - 1) { requestSelect('synthese', { intent:'proposer-synthese' }); return; }
+    if (i === CAT_ORDER.length - 1) { requestSelect('proposer-synthese', { intent:'proposer-synthese' }); return; }
     S.categorie = CAT_ORDER[i + 1]; segSet('segCat', S.categorie);
     if (S.phase === 'questions') requestSelect('categorie-suivante', { intent:'changer-categorie' });
   });
@@ -1352,7 +1399,9 @@
   /* ══════════════ FIN D'APPEL ══════════════ */
   $('btnEnd').addEventListener('click', endCall);
   async function endCall() {
-    S.listening = false; S.elapsedMs = elapsedNow();
+    S.elapsedMs = elapsedNow(); S.listening = false;
+    S.started = false; cancelSelect();
+    if (S.prepInflight) S.prepInflight.abort();
     clearInterval(S.timer); clearInterval(S.prepTimer);
     stopAudio(); $('recDot').className = 'dot';
     show('report');
