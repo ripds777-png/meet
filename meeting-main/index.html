@@ -475,6 +475,7 @@
   const CAT_ORDER = ['strategique','juridique','financier'];
 
   const SELECT_MIN_GAP = 1500;     // plafond de sécurité du sélecteur
+  const LIVE_SELECT_GAP = 3000;    // actualisation pendant la parole, sans attendre une pause
   const PREPARE_EVERY  = 20000;    // préparateur en arrière-plan
   const PING_EVERY     = 240000;
 
@@ -717,17 +718,20 @@
     // Verrouillage du prompteur : l'advisor a commencé à parler.
     if (w === 'me' && S.current && !S.locked) lockPrompter();
     if (w === 'them' && /\?/.test(clean)) requestSelect('question-client');
+    queueLiveSelect(clean, sp);
   }
   function setInterim(text, sp) {
     S.interim = String(text || ''); S.interimSp = (sp === undefined ? null : sp);
     renderTranscript();
     if (S.interim && whoOf(sp) === 'me' && S.current && !S.locked) lockPrompter();
+    queueLiveSelect(S.interim, sp);
   }
 
   /* ══════════════ PHASE D'INTRODUCTION ══════════════
      Règle non négociable : aucune suggestion tant que l'intro n'est pas finie.
      Le passage exige : advisor présenté ET client décrit (jugé par le backend),
-     PUIS une pause naturelle après un tour de parole du client.            */
+     Les suggestions peuvent commencer pendant la description du client,
+     dès que les deux présentations sont reconnues par le backend.          */
   let awaitingPause = false;
 
   function renderIntro() {
@@ -765,7 +769,7 @@
     if (S.phase !== 'intro') return;
     if (reason !== 'manuel') {
       if (!(S.introState.advisorPresented && S.introState.clientDescribed)) return;
-      if (!awaitingPause) return;        // il faut une pause après le tour du client
+      if (!awaitingPause && reason !== 'live') return;
     }
     awaitingPause = false;
     S.phase = 'questions';
@@ -811,6 +815,7 @@
   // Installe une intervention. Jamais pendant la lecture : elle attend.
   function setCurrent(iv, force) {
     if (!iv) return;
+    if (S.current && S.current.texte.trim() === iv.texte.trim()) return;
     if (S.current && S.locked && !force) { S.pending = iv; $('pPending').hidden = false; return; }
     if (S.current) {
       S.history.push(S.current);
@@ -875,8 +880,33 @@
   const EXPLICIT = ['approfondir','avancer','variantes','sortie-intro','manuel',
                     'categorie-suivante','proposer-synthese'];
   const isExplicit = (r) => EXPLICIT.indexOf(r) !== -1 || /^categorie-/.test(r || '');
+  // Un minuteur fixe regroupe les mises à jour : chaque mot ne repousse pas
+  // l'échéance, et une requête lente peut finir au lieu d'être annulée.
+  function queueLiveSelect(text, sp) {
+    if (!S.started || !S.listening || !text || text.trim().split(/\s+/).length < 4) return;
+    const who = whoOf(sp);
+    if (who === 'me' && S.phase !== 'intro') return;
+    if (who === 'them' && S.locked) {
+      S.locked = false;
+      if (S.pending && !S.pausedAuto) promote();
+      else renderPrompter();
+    }
+    S.liveDirty = true;
+    scheduleLiveSelect();
+  }
+  function scheduleLiveSelect() {
+    if (!S.started || !S.listening || !S.liveDirty || S.liveTimer || S.selectInflight || S.queuedExplicit) return;
+    S.liveTimer = setTimeout(() => {
+      S.liveTimer = null;
+      if (!S.started || !S.listening || !S.liveDirty || S.selectInflight || S.queuedExplicit) return;
+      S.liveDirty = false;
+      if (recentText() === S.lastLiveTranscript) return;
+      requestSelect('live');
+    }, Math.max(200, LIVE_SELECT_GAP - (Date.now() - S.lastSelectAt)));
+  }
   function cancelSelect() {
     clearTimeout(S.gapTimer); S.queuedExplicit = false;
+    clearTimeout(S.liveTimer); S.liveTimer = null; S.liveDirty = false;
     if (S.selectInflight) S.selectInflight.abort();
     S.selectInflight = null; S.selectExplicit = false;
     $('aiStatus').textContent = '';
@@ -886,7 +916,7 @@
     if (!S.started) return;
     const explicit = isExplicit(reason);
     // Une fin de tour automatique ne doit pas annuler un clic de l'advisor.
-    if (!explicit && (S.queuedExplicit || S.selectExplicit)) return;
+    if (!explicit && (S.queuedExplicit || S.selectInflight)) return;
     // En pause auto on continue d'appeler : la préparation ne s'arrête jamais,
     // c'est seulement l'affichage qui se fige (réf. 8.9).
     const wait = SELECT_MIN_GAP - (Date.now() - S.lastSelectAt);
@@ -906,11 +936,12 @@
     S.selectExplicit = isExplicit(reason);
     $('aiStatus').textContent = 'Préparation de la suggestion…';
     S.lastSelectAt = Date.now();
+    S.lastLiveTranscript = recentText(); S.liveDirty = false;
     const t0 = Date.now(); let got = false;
     try {
       const d = await api(Object.assign({
         mode:'select',
-        transcript: recentText(),
+        transcript: S.lastLiveTranscript,
         resume: S.resume,
         faits: S.facts,
         questions: S.questions.filter((q) => ['affichée','préparée','partielle'].indexOf(q.statut) !== -1)
@@ -931,7 +962,12 @@
     } catch (e) {
       if (S.selectInflight === ctrl && e && e.name !== 'AbortError')
         $('aiStatus').textContent = 'Suggestions indisponibles : ' + e.message;
-    } finally { if (S.selectInflight === ctrl) { S.selectInflight = null; S.selectExplicit = false; } }
+    } finally {
+      if (S.selectInflight === ctrl) {
+        S.selectInflight = null; S.selectExplicit = false;
+        scheduleLiveSelect();
+      }
+    }
   }
 
   function applySelect(d, reason) {
