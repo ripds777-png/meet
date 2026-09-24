@@ -304,9 +304,19 @@ function buildSelectPrompt({ transcript, resume, faits, questions, categorie, te
     ' "intervention":{"texte":"","type":"question|relance|reformulation|réponse|transition|synthèse",',
     '   "categorie":"strategique","objectif":"","sourceCitation":"","sourceHorodatage":"",',
     '   "aPreciser":"","pieceAttendue":"","suites":[{"si":"","alors":""}]},',
+    ' "variants":[],',
     ' "contexte":{},',
     ' "facts":[{"valeur":"","categorie":"strategique|juridique|financier","locuteur":"client",',
     '           "citation":"","certitude":"déclaré"}]}'
+  );
+  if (actions[intent]) parts.push('', '## CONSIGNE FINALE POUR CE CLIC', actions[intent]);
+  if (intent === 'variantes') parts.push(
+    'Le champ JSON "variants" est OBLIGATOIRE : exactement 3 objets distincts avec texte, type, categorie et objectif.',
+    'Il ne doit pas être vide en phase questions. Intervention est la première variante. Ne renvoie pas seulement intervention.',
+    'Fournis une formulation ouverte, une formulation précise et une reformulation de confirmation. Ne change pas le sujet.'
+  );
+  if (intent === 'avancer') parts.push(
+    'Ne pose plus de question sur le même point que current. Passe à un autre aspect utile du dossier, sans inventer de réponse au point quitté.'
   );
   return parts.join('\n');
 }
