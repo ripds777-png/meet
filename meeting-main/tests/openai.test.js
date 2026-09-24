@@ -2,7 +2,7 @@ import test, { beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
-import handler from '../api/openai.js';
+import {generate as handler} from '../api/openai.js';
 
 const ENV_KEYS = ['OPENAI_API_KEY', 'APP_PASSWORD', 'OPENAI_MODEL', 'OPENAI_MODEL_FAST',
   'OPENAI_REASONING_EFFORT', 'OPENAI_REASONING_EFFORT_FAST'];
@@ -86,8 +86,7 @@ function assertFailed(events, pattern) {
   assert.match(events.find(e => e.event === 'error')?.data.error || '', pattern);
 }
 
-test('authentication and validation stop requests before any provider call', async () => {
-  assert.equal((await handler(req({ mode: 'ping' }, { headers: {} }))).status, 401);
+test('model input validation stops requests before any provider call', async () => {
   assert.equal((await handler(new Request('https://meeting.test/api/openai'))).status, 405);
   assert.equal((await handler(req({}, { body: '{broken' }))).status, 400);
   assert.equal((await handler(req({ mode: 'unknown' }))).status, 400);
@@ -327,7 +326,7 @@ function browserApi() {
   const state = { password: 'test-password', settings: {}, cfg: BASE };
   let route;
   const context = vm.createContext({
-    S: state, LS: { pw: 'password' }, TextDecoder,
+    window:{meetActiveDossier:'test-dossier'}, S: state, LS: { pw: 'password' }, TextDecoder,
     lsDel() { throw new Error('Password must not be cleared'); },
     askPassword() { throw new Error('Unexpected password prompt'); },
     fetch: async (url, options) => { route = url; return handler(new Request('https://meeting.test' + url, options)); }
