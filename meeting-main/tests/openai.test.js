@@ -291,6 +291,36 @@ test('cancelling the browser response aborts upstream generation', { timeout: 20
 });
 
 // Exécute le client SSE réellement livré dans index.html, sans dépendance navigateur.
+test('manual button intentions and current question reach the model', async () => {
+  for (const [intent, expected] of [['approfondir', /Approfondis/], ['avancer', /prochain point/],
+    ['variantes', /3 formulations/], ['changer-categorie', /catégorie active demandée/], ['proposer-synthese', /synthèse fidèle/]]) {
+    let body;
+    globalThis.fetch.mock.mockImplementation(async (_url, options) => {
+      body = JSON.parse(options.body);
+      return upstream(wire(responseEvents(JSON.stringify(SELECT))));
+    });
+    await eventsOf(await handler(req({ mode: 'select', intent, current: { texte: 'Quel calendrier précis ?' } })));
+    assert.match(body.input[0].content, expected);
+    assert.match(body.input[0].content, /Quel calendrier précis/);
+  }
+});
+
+test('variants are normalized and hidden during introduction', async () => {
+  const fixture = { ...SELECT, variants: [SELECT.intervention, { texte: 'Quelle date avez-vous prévue ?' }, null, { texte: 'Extra' }] };
+  useUpstream(responseEvents(JSON.stringify(fixture)));
+  let done = doneOf(await eventsOf(await handler(req({ mode: 'select', intent: 'variantes' }))));
+  assert.equal(done.variants.length, 2);
+  fixture.intro = { advisorPresented: false, clientDescribed: false };
+  useUpstream(responseEvents(JSON.stringify(fixture)));
+  done = doneOf(await eventsOf(await handler(req({ mode: 'select' }))));
+  assert.deepEqual(done.variants, []);
+  assert.equal(done.intervention, null);
+  useUpstream(responseEvents(JSON.stringify(fixture)));
+  done = doneOf(await eventsOf(await handler(req({ mode: 'select', introForced: true }))));
+  assert.equal(done.phase, 'questions');
+  assert.ok(done.intervention);
+});
+
 function browserApi() {
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   const script = html.slice(html.indexOf('  async function api('), html.indexOf('  function ping()'));
