@@ -359,3 +359,13 @@ test('actual browser client rejects a truncated report instead of enabling a par
   useUpstream(responseEvents('COMPTE RENDU\nPartiel', 'response.incomplete'));
   await assert.rejects(browserApi().call({ mode: 'summary' }), /limite de tokens/);
 });
+
+
+test('document extraction validates sources server side and leaves approval unavailable',async()=>{
+ const sources=[{id:'s1',text:'La société Exemple SAS demande 100 EUR.',role:'client'}];
+ const facts=[{fieldId:'F07',sourceId:'s1',quote:sources[0].text,raw:'100 EUR',entity:'Exemple SAS',currency:'EUR'},{fieldId:'F21',sourceId:'s1',quote:sources[0].text,raw:'100 EUR'}];
+ useUpstream(responseEvents(JSON.stringify({facts})));
+ const events=await eventsOf(await handler(req({mode:'extract',sources})));
+ assert.equal(doneOf(events).facts.length,1);assert.equal(doneOf(events).facts[0].raw,'100 EUR');
+ const bad=await handler(req({mode:'extract',sources:[]}));assert.equal(bad.status,400);
+});
