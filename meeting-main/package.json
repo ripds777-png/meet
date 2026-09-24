@@ -1,0 +1,24 @@
+{
+  "name": "meet",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Copilote IA mobile pour visioconferences : transcription live, questions suggerees, bilan structure.",
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "dev": "vercel dev",
+    "test": "node --test",
+    "deploy": "vercel --prod"
+  },
+  "author": {
+    "name": "ripds777-png",
+    "url": "https://github.com/ripds777-png"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ripds777-png/meet.git"
+  },
+  "homepage": "https://github.com/ripds777-png/meet"
+}
