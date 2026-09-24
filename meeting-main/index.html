@@ -550,7 +550,7 @@
       if (!d) throw new Error('Réponse vide du serveur.'); return d;
     }
     const reader = res.body.getReader(), dec = new TextDecoder();
-    let buf = '', done = null, errTxt = null, first = true;
+    let buf = '', done = null, errTxt = null, first = true, requestUsage = null;
     for (;;) {
       const c = await reader.read(); if (c.done) break;
       buf += dec.decode(c.value, { stream:true });
@@ -562,12 +562,13 @@
         let d = null; try { d = JSON.parse(raw); } catch(e){ continue; }
         if (ev === 'delta') { if (first) { first = false; if (onDelta) onDelta('', true); } if (onDelta) onDelta(d.t || ''); }
         else if (ev === 'done') done = d;
-        else if (ev === 'usage') S.lastUsage = d;
+        else if (ev === 'usage') { S.lastUsage = d; requestUsage=d; }
         else if (ev === 'error') errTxt = d.error;
       }
     }
     if (errTxt) throw new Error(errTxt);
     if (!done) throw new Error('Flux interrompu avant la fin.');
+    if(payload.mode==='extract') done.usage=requestUsage;
     return done;
   }
   function ping() {
@@ -712,7 +713,11 @@
   function addSegment(text, sp) {
     const clean = String(text).replace(/\s+/g, ' ').trim();
     if (!clean) return;
-    S.segments.push({ t: elapsedNow(), sp: (sp === undefined ? null : sp), text: clean });
+    const previous = S.segments[S.segments.length-1];
+    if (previous && previous.text === clean && previous.sp === sp && elapsedNow()-previous.t < 1500) return;
+    const segment = { id:crypto.randomUUID(), t:elapsedNow(), sp:(sp===undefined?null:sp), text:clean };
+    S.segments.push(segment);
+    window.dossierFinalSegment?.(segment);
     renderTranscript(); persist();
     const w = whoOf(sp);
     // Verrouillage du prompteur : l'advisor a commencé à parler.
@@ -941,6 +946,7 @@
     try {
       const d = await api(Object.assign({
         mode:'select',
+        dossierContext: globalThis.dossierContext?.(),
         transcript: S.lastLiveTranscript,
         resume: S.resume,
         faits: S.facts,
@@ -1329,6 +1335,7 @@
 
   async function startCall() {
     if (!S.cfg.societe || !S.cfg.duree || S.cfg.contexte.length < 10 || !S.cfg.consent) { show('config'); validateCfg(); return; }
+    window.dossierEnsure?.();
     show('call');
     S.started = true; S.listening = true; S.lastResume = Date.now(); S.t0 = Date.now();
     S.phase = 'intro'; $('introPanel').hidden = false; $('prompter').hidden = true;
@@ -1565,6 +1572,7 @@
     if (pTimer) return;
     pTimer = setTimeout(() => {
       pTimer = null;
+      window.dossierSaveCall?.({cfg:{...S.cfg,consent:false},segments:S.segments,facts:S.facts,questions:S.questions,resume:S.resume,contexte:S.contexte,elapsedMs:elapsedNow(),reportText:S.reportText,speakerMe:S.speakerMe});
       lsSet(LS.call, { cfg:S.cfg, plan:S.plan, reserve:S.reserve, segments:S.segments.slice(-3000),
         facts:S.facts, questions:S.questions, contexte:S.contexte, resume:S.resume,
         phase:S.phase, introState:S.introState, categorie:S.categorie, speakerMe:S.speakerMe,
@@ -1598,8 +1606,13 @@
   boot();
 
   // Surface de test (non utilisée par l'interface).
-  window.__adv = { S, applySelect, maybeLeaveIntro, addSegment, setInterim, setCurrent, renderIntro };
+  window.__adv = { api, whoOf,
+    restoreDossierCall(c){ if(S.listening||!c)return; for(const k of ['segments','facts','questions','resume','contexte','elapsedMs','reportText','speakerMe']) if(c[k]!==undefined)S[k]=c[k]; if(c.cfg){S.cfg={...S.cfg,...c.cfg,consent:false}; $('dossierCtx').value=S.cfg.contexte||''; $('advisorName').value=S.cfg.advisor||''; if(S.cfg.societe)segSet('segSociete',S.cfg.societe);if(S.cfg.duree)segSet('segDuree',S.cfg.duree);if(S.cfg.scenario)segSet('segScenario',S.cfg.scenario);if(S.cfg.canal)segSet('segCanal',S.cfg.canal);} show('config');validateCfg();renderTranscript(); },
+    resetDossierCall(){ if(S.listening) return; S.selectInflight?.abort(); S.prepInflight?.abort(); S.started=false; S.pending=null; S.variants=[]; S.interim=''; S.cfg.contexte=''; $('dossierCtx').value=''; S.cfg.consent=false; S.speakerMe=null; clearTimeout(S.liveTimer); clearTimeout(S.gapTimer); S.segments=[]; S.facts=[]; S.questions=[]; S.resume=''; S.contexte={}; S.current=null; S.history=[]; S.reportText=''; S.docs=[]; S.elapsedMs=0; lsDel(LS.call); renderTranscript(); },
+    showDossierQuestion(f){ if(!S.started || S.phase==='intro'){ warn('La question sera disponible après les présentations et le démarrage de l’appel.'); return; } setCurrent({texte:f.question,categorie:f.category,type:'question',objectif:'Compléter '+f.sources.map(s=>s.model).join(', '),sourceCitation:'Modèles : '+f.sources.map(s=>s.model+' §'+s.section+' p.'+s.page).join(', '),aPreciser:[]},true); },
+    S, applySelect, maybeLeaveIntro, addSegment, setInterim, setCurrent, renderIntro };
 })();
 </script>
+<script type="module" src="/dossier-ui.js"></script>
 </body>
 </html>
