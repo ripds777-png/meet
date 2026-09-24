@@ -215,8 +215,17 @@ function normalizePlan(parsed, duree) {
 
 /* -------------------------------------------------------------- select ---- */
 
-function buildSelectPrompt({ transcript, resume, faits, questions, categorie, temps, introState, clientQuestion }) {
+function buildSelectPrompt({ transcript, resume, faits, questions, categorie, temps, introState, clientQuestion, intent, current }) {
   const parts = [];
+  const actions = {
+    approfondir: 'Approfondis la question affichée : demande une précision concrète sur le même sujet.',
+    avancer: 'Passe au prochain point utile non résolu. Ne reformule pas la question affichée et ne la marque pas posée ou résolue sans preuve.',
+    variantes: 'Propose 3 formulations alternatives de la question affichée, dans un tableau variants (objets au même format que intervention). Conserve le même objectif.',
+    'changer-categorie': 'Propose une question dans la catégorie active demandée.',
+    'proposer-synthese': 'Propose une synthèse fidèle et une transition vers la conclusion.'
+  };
+  if (actions[intent]) parts.push('## ACTION DEMANDÉE PAR L’ADVISOR', actions[intent], '');
+  if (current && current.texte) parts.push('## QUESTION ACTUELLEMENT AFFICHÉE', str(current.texte, 600), '');
 
   parts.push('## ÉTAT DE L’APPEL');
   parts.push(`Phase d'introduction : présentation de l'advisor ${introState && introState.advisorPresented ? 'FAITE' : 'PAS ENCORE FAITE'}, ` +
@@ -468,7 +477,7 @@ function extractJson(raw) {
 
 const str = (v, max) => String(v === undefined || v === null ? '' : v).trim().slice(0, max || 500);
 
-function normalizeSelect(parsed, validIds) {
+function normalizeSelect(parsed, validIds, manualIntro = false) {
   const empty = {
     phase: 'intro',
     intro: { advisorPresented: false, clientDescribed: false },
@@ -478,8 +487,8 @@ function normalizeSelect(parsed, validIds) {
   if (!parsed || typeof parsed !== 'object') return empty;
 
   const intro = parsed.intro && typeof parsed.intro === 'object' ? parsed.intro : {};
-  const advisorPresented = intro.advisorPresented === true;
-  const clientDescribed = intro.clientDescribed === true;
+  const advisorPresented = manualIntro || intro.advisorPresented === true;
+  const clientDescribed = manualIntro || intro.clientDescribed === true;
 
   // ── RÈGLE BLOQUANTE ────────────────────────────────────────────────────────
   // L'introduction n'est terminée que si les DEUX présentations sont faites.
@@ -544,7 +553,10 @@ function normalizeSelect(parsed, validIds) {
     resolvedIds: idList(parsed.resolvedIds),
     partialIds: idList(parsed.partialIds),
     staleCurrent: parsed.staleCurrent === true,
-    intervention
+    intervention,
+    variants: phase === 'questions' && Array.isArray(parsed.variants)
+      ? parsed.variants.slice(0, 3).map((iv) => normalizeSelect({ intro: { advisorPresented: true, clientDescribed: true }, intervention: iv }, []).intervention).filter(Boolean)
+      : []
   };
 }
 
@@ -634,7 +646,7 @@ export default async function handler(req) {
   const {
     societe, fiche, regles, contexte, scenario, plan, duree,
     transcript, resume, faits, questions, categorie, temps, introState,
-    clientQuestion, reserve, documents
+    clientQuestion, reserve, documents, intent, current, introForced
   } = body;
 
   const ctx = typeof contexte === 'string' ? contexte.trim() : '';
@@ -653,7 +665,9 @@ export default async function handler(req) {
 
   const userPrompt =
     mode === 'plan'    ? buildPlanPrompt({ duree: Number(duree), contexte: ctx, documents }) :
-    mode === 'select'  ? buildSelectPrompt({ transcript, resume, faits, questions, categorie, temps, introState, clientQuestion }) :
+    mode === 'select'  ? buildSelectPrompt({ transcript, resume, faits, questions, categorie, temps,
+      introState: introForced === true ? { advisorPresented: true, clientDescribed: true } : introState,
+      clientQuestion, intent, current }) :
     mode === 'prepare' ? buildPreparePrompt({ transcript, resume, faits, questions, categorie, reserve }) :
                          buildSummaryPrompt({ transcript, faits, questions, resume, temps, scenario });
 
@@ -802,7 +816,7 @@ export default async function handler(req) {
             throw new Error('Réponse OpenAI inexploitable : objet JSON attendu.');
           }
           if (mode === 'plan')         send('done', normalizePlan(parsed, Number(duree)));
-          else if (mode === 'select')  send('done', normalizeSelect(parsed, validIds));
+          else if (mode === 'select')  send('done', normalizeSelect(parsed, validIds, introForced === true));
           else                        send('done', normalizePrepare(parsed));
         }
       } catch (err) {
