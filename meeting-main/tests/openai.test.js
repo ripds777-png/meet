@@ -115,7 +115,8 @@ test('plan uses OpenAI credentials and preserves all supported durations and pha
   for (const duration of [20, 30, 45, 60, 90, 120]) {
     const data = doneOf(await eventsOf(await handler(req({ mode: 'plan', duree: duration }))));
     assert.equal(data.total, duration);
-    assert.equal(data.phases.length, 5);
+    assert.equal(data.phases.length, 6);
+    assert.ok(data.phases.some(p=>p.key==='documents'&&p.minutes>=1));
     assert.equal(data.phases.reduce((n, p) => n + p.minutes, 0), duration);
     assert.ok(data.phases.every(p => Number.isInteger(p.minutes) && p.minutes >= 1));
     assert.equal(data.reserve[0].categorie, 'financier');

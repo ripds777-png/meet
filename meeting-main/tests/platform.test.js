@@ -7,10 +7,10 @@ import {ingest} from '../dossier.js';
 import endpoint from '../api/platform.js';
 import ai from '../api/openai.js';
 import deepgram from '../api/deepgram-token.js';
-let db;const admin='10000000-0000-4000-8000-000000000001',advisor='10000000-0000-4000-8000-000000000002',manager='10000000-0000-4000-8000-000000000003',outsider='10000000-0000-4000-8000-000000000004';let first,second;
+let db;const storage=new Map();const admin='10000000-0000-4000-8000-000000000001',advisor='10000000-0000-4000-8000-000000000002',manager='10000000-0000-4000-8000-000000000003',outsider='10000000-0000-4000-8000-000000000004';let first,second;
 before(async()=>{db=new PGlite();await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create table auth.users(id uuid primary key);create schema storage;create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint);`);for(const f of (await readdir(new URL('../migrations/',import.meta.url))).sort())await db.exec(await readFile(new URL('../migrations/'+f,import.meta.url),'utf8'));});
 after(async()=>db.close());
-beforeEach(async()=>{process.env.SUPABASE_URL='https://database.test';process.env.SUPABASE_SERVICE_ROLE_KEY='test-service';process.env.APP_ORIGIN='https://app.test';await db.exec('truncate meet_profiles,auth.users,meet_clients cascade');for(const id of [admin,advisor,manager,outsider])await db.query('insert into auth.users values($1)',[id]);
+beforeEach(async()=>{storage.clear();process.env.SUPABASE_URL='https://database.test';process.env.SUPABASE_SERVICE_ROLE_KEY='test-service';process.env.APP_ORIGIN='https://app.test';await db.exec('truncate meet_profiles,auth.users,meet_clients cascade');for(const id of [admin,advisor,manager,outsider])await db.query('insert into auth.users values($1)',[id]);
  await db.query(`insert into meet_profiles(id,name,email,roles,societies,can_create,must_change_password)values($1,'Admin','admin@test.invalid',array['admin'],array['PWM'],false,false),($2,'Advisor','advisor@test.invalid',array['advisor'],array['PWM'],true,false),($3,'Manager','manager@test.invalid',array['responsable'],array['PWM'],true,false),($4,'Other','other@test.invalid',array['advisor'],array['ADM'],true,false)`,[admin,advisor,manager,outsider]);
  first=(await db.query('select meet_create_dossier($1,null,$2,$3,$4) as d',[advisor,'Même nom','PWM',createDossier('Même nom')])).rows[0].d;second=(await db.query('select meet_create_dossier($1,null,$2,$3,$4) as d',[outsider,'Même nom','ADM',createDossier('Même nom')])).rows[0].d;
  await db.query('insert into meet_grants values($1,$2,$3)',[first.id,manager,['read','write','assign','review']]);
@@ -19,8 +19,8 @@ beforeEach(async()=>{process.env.SUPABASE_URL='https://database.test';process.en
 });
 afterEach(()=>mock.restoreAll());
 function response(x,status=200){return new Response(JSON.stringify(x),{status,headers:{'content-type':'application/json'}});}
-async function rest(url,options={}){const u=new URL(url);if(u.pathname.startsWith('/rest/v1/rpc/')){const fn=u.pathname.split('/').at(-1);assert.match(fn,/^meet_[a-z_]+$/);const b=JSON.parse(options.body);try{const result=await db.query('select '+fn+'('+Object.keys(b).map((k,i)=>k+'=> $'+(i+1)).join(',')+') as value',Object.values(b));return response(result.rows[0].value);}catch(e){return response({code:e.code},400);}}
- const table=u.pathname.split('/').at(-1);assert.match(table,/^meet_[a-z_]+$/);let params=[],where=[];for(const [k,v]of u.searchParams){if(['order','limit','select','on_conflict'].includes(k))continue;assert.match(k,/^[a-z_]+$/);if(v.startsWith('eq.')){params.push(v.slice(3));where.push(k+'=$'+params.length);}else if(v.startsWith('gt.')){params.push(v.slice(3));where.push(k+'>$'+params.length);}else throw new Error('Unsupported test filter '+v);}
+async function rest(url,options={}){const u=new URL(url);if(u.pathname.startsWith('/storage/v1/object/')){const key=u.pathname.replace('/storage/v1/object/authenticated/','').replace('/storage/v1/object/','');if(options.method==='POST'){storage.set(key,new Uint8Array(options.body));return response({ok:true});}const bytes=storage.get(key);if(!bytes)return response({code:'NoSuchKey'},404);return new Response(bytes,{headers:{'content-length':String(bytes.length)}});}if(u.pathname.startsWith('/rest/v1/rpc/')){const fn=u.pathname.split('/').at(-1);assert.match(fn,/^meet_[a-z_]+$/);const b=JSON.parse(options.body);try{const result=await db.query('select '+fn+'('+Object.keys(b).map((k,i)=>k+'=> $'+(i+1)).join(',')+') as value',Object.values(b));return response(result.rows[0].value);}catch(e){return response({code:e.code},400);}}
+ const table=u.pathname.split('/').at(-1);assert.match(table,/^meet_[a-z_]+$/);let params=[],where=[];for(const [k,v]of u.searchParams){if(['order','limit','offset','select','on_conflict'].includes(k))continue;assert.match(k,/^[a-z_]+$/);if(v.startsWith('eq.')){params.push(v.slice(3));where.push(k+'=$'+params.length);}else if(v.startsWith('gt.')){params.push(v.slice(3));where.push(k+'>$'+params.length);}else if(v.startsWith('in.(')){const vals=v.slice(4,-1).split(',');where.push(k+' in ('+vals.map(x=>{params.push(x);return '$'+params.length;}).join(',')+')');}else if(v==='is.null')where.push(k+' is null');else throw new Error('Unsupported test filter '+v);}
  const predicate=where.length?' where '+where.join(' and '):'';const method=options.method||'GET';if(method==='GET')return response((await db.query('select * from '+table+predicate,params)).rows);
  if(method==='POST'){const b=JSON.parse(options.body);const keys=Object.keys(b);const result=await db.query('insert into '+table+'('+keys.join(',')+')values('+keys.map((_,i)=>'$'+(i+1)).join(',')+')returning *',Object.values(b));return response(result.rows);}
  throw new Error('Unexpected operation '+method);
@@ -83,7 +83,7 @@ test('extraction batches fit the model input limit without discarding remaining 
 
 test('admin-only account cannot read an old dossier assignment through APIs',async()=>{
  await db.query("update meet_profiles set roles=array['admin'] where id=$1",[advisor]);
- assert.equal((await endpoint(req('list'))).status,403);
+ assert.deepEqual((await (await endpoint(req('list'))).json()).dossiers,[]);
  assert.equal((await endpoint(new Request('https://app.test/api/platform?action=detail&dossierId='+first.id,{headers:{cookie:'__Host-meet='+'a'.repeat(64)}}))).status,403);
 });
 
@@ -94,4 +94,44 @@ test('document review rejects stale facts and requires the explicit approval gra
  await assert.rejects(db.query('select meet_review_document($1,$2,2,$3,$4,$5)',[manager,first.id,doc.id,'Validé par une personne habilitée','Contrôle']),/insufficient/);
  await db.query('select meet_review_document($1,$2,2,$3,$4,$5)',[manager,first.id,doc.id,'En revue','Contrôle']);
  assert.equal((await db.query('select review from meet_documents where id=$1',[doc.id])).rows[0].review,'En revue');
+});
+
+
+test('explicit assignment shares the original dossier, preserves identity and rejects wrong society or inactive members',async()=>{
+ await db.query('select meet_set_grant($1,$2,$3,$4)',[admin,manager,first.id,['read','write','review']]);
+ assert.equal((await db.query('select count(*) n from meet_dossiers')).rows[0].n,2);
+ const grant=(await db.query('select * from meet_grants where user_id=$1 and dossier_id=$2',[manager,first.id])).rows[0];
+ assert.equal(grant.dossier_id,first.id);assert.ok(allowed({id:manager,active:true,roles:['responsable'],societies:['PWM']},first,grant,'read'));
+ await assert.rejects(db.query('select meet_set_grant($1,$2,$3,$4)',[admin,outsider,first.id,['read']]),/insufficient/);
+ await db.query('update meet_profiles set active=false where id=$1',[manager]);
+ await assert.rejects(db.query('select meet_set_grant($1,$2,$3,$4)',[admin,manager,first.id,['read']]),/insufficient/);
+ await db.query('select meet_set_grant($1,$2,$3,$4)',[admin,manager,first.id,[]]);
+});
+
+test('technical admin needs a separate read-only supervision grant per dossier',()=>{
+ const p={id:admin,active:true,roles:['admin'],societies:['PWM']},g={user_id:admin,dossier_id:first.id,permissions:['read']};
+ assert.equal(allowed(p,first,g,'read'),false);g.permissions.push('supervise');assert.equal(allowed(p,first,g,'read'),true);assert.equal(allowed(p,first,g,'write'),false);
+});
+
+test('activity instrumentation does not invent previous logins',async()=>{
+ await db.query('select meet_touch_activity($1,false)',[advisor]);let p=(await db.query('select * from meet_profiles where id=$1',[advisor])).rows[0];assert.equal(p.last_login_at,null);assert.ok(p.last_activity_at);
+ await db.query('select meet_touch_activity($1,true)',[advisor]);p=(await db.query('select * from meet_profiles where id=$1',[advisor])).rows[0];assert.ok(p.last_login_at);
+});
+
+
+test('two independent sessions see identical file IDs and bytes; lost ACK and missing storage are reconciled',async()=>{
+ const fileId=crypto.randomUUID(),body={dossierId:first.id,fileId,filename:'test.txt',mime:'text/plain',parts:1,bytes:3,kind:'evidence'};
+ const invoke=(action,b=body)=>endpoint(req(action,b));
+ assert.equal((await invoke('file-init')).status,201);
+ const upload=()=>endpoint(new Request('https://app.test/api/platform?'+new URLSearchParams({action:'upload-part',dossierId:first.id,fileId,part:'0'}),{method:'POST',headers:{origin:'https://app.test',cookie:'__Host-meet='+'a'.repeat(64)},body:'abc'}));
+ assert.equal((await upload()).status,200);assert.equal((await upload()).status,200);assert.equal(storage.size,1);
+ assert.equal((await invoke('file-complete')).status,200);
+ const init=await (await invoke('file-init')).json();assert.deepEqual(init.uploadedParts,[0]);
+ await db.query("insert into meet_sessions(token_hash,user_id,session_version,expires_at)values($1,$2,1,now()+interval '1 hour')",[await hash('b'.repeat(64)),manager]);
+ const read=(token,action,extra={})=>endpoint(new Request('https://app.test/api/platform?'+new URLSearchParams({action,dossierId:first.id,...extra}),{headers:{cookie:'__Host-meet='+token.repeat(64)}}));
+ const a=await(await read('a','detail')).json(),b=await(await read('b','detail')).json();assert.equal(a.dossier.id,b.dossier.id);assert.equal(a.files[0].id,b.files[0].id);
+ assert.equal(await(await read('b','file-part',{fileId,part:'0'})).text(),'abc');
+ storage.clear();assert.deepEqual((await(await invoke('file-init')).json()).uploadedParts,[]);assert.equal((await invoke('file-complete')).status,409);
+ assert.equal((await upload()).status,200);assert.equal((await invoke('file-complete')).status,200);
+ await db.query('select meet_set_grant($1,$2,$3,$4)',[admin,manager,first.id,[]]);assert.equal((await read('b','file-part',{fileId,part:'0'})).status,403);assert.equal((await read('b','detail')).status,403);
 });
