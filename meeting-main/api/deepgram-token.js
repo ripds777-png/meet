@@ -1,3 +1,4 @@
+import {session,origin,access,hasRole,json as secureJson} from '../server/platform.js';
 // Projet personnel de ripds777-png — https://github.com/ripds777-png/meet
 // api/deepgram-token.js — Vercel Edge Function
 //
@@ -32,13 +33,7 @@ export default async function handler(req) {
     });
   }
 
-  const appPassword = process.env.APP_PASSWORD;
-  if (appPassword) {
-    const provided = req.headers.get('x-app-password');
-    if (!provided || provided !== appPassword) {
-      return json(401, { error: 'Mot de passe de l’application invalide ou manquant.' });
-    }
-  }
+  try { origin(req); const p=await session(req); hasRole(p,'advisor'); const body=await req.json(); await access(p,body.dossierId,'call'); } catch(e){ return secureJson(e.status||400,{error:e.status?e.message:'Requête invalide.'}); }
 
   const key = process.env.DEEPGRAM_API_KEY;
   if (!key) {

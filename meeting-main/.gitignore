@@ -1,0 +1,7 @@
+
+public/
+server/pages.js
+.env
+.env.local
+node_modules/
+tmp/

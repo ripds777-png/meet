@@ -2,7 +2,7 @@ import test, { beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
-import handler from '../api/openai.js';
+import {generate as handler} from '../api/openai.js';
 
 const ENV_KEYS = ['OPENAI_API_KEY', 'APP_PASSWORD', 'OPENAI_MODEL', 'OPENAI_MODEL_FAST',
   'OPENAI_REASONING_EFFORT', 'OPENAI_REASONING_EFFORT_FAST'];
@@ -86,8 +86,7 @@ function assertFailed(events, pattern) {
   assert.match(events.find(e => e.event === 'error')?.data.error || '', pattern);
 }
 
-test('authentication and validation stop requests before any provider call', async () => {
-  assert.equal((await handler(req({ mode: 'ping' }, { headers: {} }))).status, 401);
+test('model input validation stops requests before any provider call', async () => {
   assert.equal((await handler(new Request('https://meeting.test/api/openai'))).status, 405);
   assert.equal((await handler(req({}, { body: '{broken' }))).status, 400);
   assert.equal((await handler(req({ mode: 'unknown' }))).status, 400);
@@ -116,7 +115,8 @@ test('plan uses OpenAI credentials and preserves all supported durations and pha
   for (const duration of [20, 30, 45, 60, 90, 120]) {
     const data = doneOf(await eventsOf(await handler(req({ mode: 'plan', duree: duration }))));
     assert.equal(data.total, duration);
-    assert.equal(data.phases.length, 5);
+    assert.equal(data.phases.length, 6);
+    assert.ok(data.phases.some(p=>p.key==='documents'&&p.minutes>=1));
     assert.equal(data.phases.reduce((n, p) => n + p.minutes, 0), duration);
     assert.ok(data.phases.every(p => Number.isInteger(p.minutes) && p.minutes >= 1));
     assert.equal(data.reserve[0].categorie, 'financier');
@@ -327,7 +327,7 @@ function browserApi() {
   const state = { password: 'test-password', settings: {}, cfg: BASE };
   let route;
   const context = vm.createContext({
-    S: state, LS: { pw: 'password' }, TextDecoder,
+    window:{meetActiveDossier:'test-dossier'}, S: state, LS: { pw: 'password' }, TextDecoder,
     lsDel() { throw new Error('Password must not be cleared'); },
     askPassword() { throw new Error('Unexpected password prompt'); },
     fetch: async (url, options) => { route = url; return handler(new Request('https://meeting.test' + url, options)); }
