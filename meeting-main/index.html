@@ -525,7 +525,7 @@
     const set = S.settings[S.cfg.societe] || { fiche:'', regles:'' };
     const body = Object.assign({
       dossierId:window.meetActiveDossier, societe: S.cfg.societe, fiche: set.fiche, regles: set.regles,
-      contexte: S.cfg.contexte, scenario: S.cfg.scenario, plan: S.plan
+      contexte: [S.cfg.contexte, S.cfg.interlocutor?'Profil de l’interlocuteur : '+S.cfg.interlocutor:'', S.cfg.businessRole?'Fonction de l’appelant : '+S.cfg.businessRole:''].filter(Boolean).join('\n'), scenario: S.cfg.scenario, plan: S.plan
     }, payload);
     let res;
     try {
@@ -1185,7 +1185,7 @@
   const wsr = { rec:null, manual:false, timer:null };
   function useWebSpeech(reason) {
     if (!SR) { fatal('Deepgram est injoignable et ce navigateur ne gère pas la reconnaissance vocale. Utilisez Chrome.'); return false; }
-    stopAudio(); S.engine = 'navigateur'; wsr.manual = false;
+    dg.closing=true;if(dg.ws){try{dg.ws.close();}catch{}dg.ws=null;}dg.closing=false;if(dg.stream)startRec(); S.engine = 'navigateur'; wsr.manual = false;
     const rec = new SR(); rec.lang = 'fr-FR'; rec.continuous = true; rec.interimResults = true;
     rec.onresult = (e) => {
       let it = '';
@@ -1308,7 +1308,7 @@
   function renderFrieze() {
     if (!S.plan) return;
     const cur = currentPhaseLabel();
-    const cols = { introduction:'#3a4350', strategie:'#4b6280', juridique:'#4a5f52', financier:'#6b5f42', synthese:'#4a4356' };
+    const cols = { introduction:'#3a4350', strategie:'#4b6280', juridique:'#4a5f52', financier:'#6b5f42', documents:'#3d686b', synthese:'#4a4356' };
     $('frieze').innerHTML = S.plan.phases.map((p) =>
       '<div class="' + (p.key === cur ? 'cur' : '') + '" style="flex:' + p.minutes + ';background:' + cols[p.key] + '"></div>').join('');
     $('friezeLbl').innerHTML = S.plan.phases.map((p) =>
@@ -1347,12 +1347,12 @@
     renderIntro(); renderContexte(); renderQueue(); renderTranscript();
     clearInterval(S.timer); S.timer = setInterval(tick, 1000); tick();
 
-    // Plan de l'appel
-    try {
+    // Generate the plan in the background; microphone capture must not wait for AI.
+    (async()=>{try {
       const docs = S.docs.filter((d) => d.extractable).map((d) => d.name + ' :\n' + d.text).join('\n\n');
       const p = await api({ mode:'plan', duree: S.cfg.duree, documents: docs });
       if (p && p.phases) { S.plan = p; S.reserve = p.reserve || []; renderFrieze(); tick(); }
-    } catch (e) { $('aiStatus').textContent = 'Plan non généré : ' + e.message; }
+    } catch (e) { $('aiStatus').textContent = 'Plan non généré : ' + e.message; }})();
 
     // Audio
     try {
@@ -1426,7 +1426,7 @@
     const choix = prompt('Nouvelle durée totale en minutes (20, 30, 45, 60, 90 ou 120) :', String(S.cfg.duree));
     const d = Number(choix);
     if ([20,30,45,60,90,120].indexOf(d) === -1) return;
-    S.cfg.duree = d; $('cTotal').textContent = d + ' min'; S.overWarned = false; saveCfg();
+    S.cfg.duree = d; window.meetCallConfigChanged?.(); $('cTotal').textContent = d + ' min'; S.overWarned = false; saveCfg();
     // Le temps écoulé est conservé ; seul le plan est recalculé.
     try {
       const p = await api({ mode:'plan', duree:d });
@@ -1606,6 +1606,8 @@
     restoreDossierCall(c){ if(S.listening||!c)return; for(const k of ['segments','facts','questions','resume','contexte','elapsedMs','reportText','speakerMe']) if(c[k]!==undefined)S[k]=c[k]; if(c.cfg){S.cfg={...S.cfg,...c.cfg,consent:false}; $('dossierCtx').value=S.cfg.contexte||''; $('advisorName').value=S.cfg.advisor||''; if(S.cfg.societe)segSet('segSociete',S.cfg.societe);if(S.cfg.duree)segSet('segDuree',S.cfg.duree);if(S.cfg.scenario)segSet('segScenario',S.cfg.scenario);if(S.cfg.canal)segSet('segCanal',S.cfg.canal);} show('config');validateCfg();renderTranscript(); },
     resetDossierCall(){ if(S.listening) return; S.selectInflight?.abort(); S.prepInflight?.abort(); S.started=false; S.pending=null; S.variants=[]; S.interim=''; S.cfg.contexte=''; $('dossierCtx').value=''; S.cfg.consent=false; S.speakerMe=null; clearTimeout(S.liveTimer); clearTimeout(S.gapTimer); S.segments=[]; S.facts=[]; S.questions=[]; S.resume=''; S.contexte={}; S.current=null; S.history=[]; S.reportText=''; S.docs=[]; S.elapsedMs=0; lsDel(LS.call); renderTranscript(); },
     showDossierQuestion(f){ if(!S.started || S.phase==='intro'){ warn('La question sera disponible après les présentations et le démarrage de l’appel.'); return; } setCurrent({texte:f.question,categorie:f.category,type:'question',objectif:'Compléter '+f.sources.map(s=>s.model).join(', '),sourceCitation:'Modèles : '+f.sources.map(s=>s.model+' §'+s.section+' p.'+s.page).join(', '),aPreciser:[]},true); },
+    adaptProfile(){runPrepare();if(S.phase==='questions')requestSelect('adapter-profil',{intent:'adapter-profil'});},
+    setAgenda(phases){if(!phases.every(p=>Number.isFinite(p.minutes)&&p.minutes>=1)||phases.reduce((n,p)=>n+p.minutes,0)!==S.cfg.duree)throw new Error('La somme doit correspondre à la durée totale.');S.plan={...(S.plan||{}),phases};renderFrieze();tick();},
     S, applySelect, maybeLeaveIntro, addSegment, setInterim, setCurrent, renderIntro };
 })();
 </script>
