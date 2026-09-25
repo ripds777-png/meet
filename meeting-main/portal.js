@@ -70,3 +70,7 @@ let refreshing=false;
 setInterval(async()=>{if(!(location.pathname.startsWith('/responsable')||(location.pathname==='/admin'&&location.search.includes('dossier=')))||document.hidden||document.querySelector('dialog[open]')||['INPUT','SELECT','TEXTAREA'].includes(document.activeElement?.tagName)||refreshing)return;refreshing=true;try{const y=scrollY,open=[...app.querySelectorAll('details')].map(d=>d.open);await route();app.querySelectorAll('details').forEach((d,i)=>d.open=open[i]||false);scrollTo(0,y);}catch(e){if(e.status===403){app.replaceChildren();current=null;details=null;}error(e);}finally{refreshing=false;}},30000);
 
 
+
+// Check revocation even while a transcript/audio dialog is open.
+let checkingAccess=false;
+setInterval(async()=>{if(!current||checkingAccess)return;checkingAccess=true;try{await api('access',null,{dossierId:current.id});}catch(e){if([401,403,428].includes(e.status)){for(const dialog of document.querySelectorAll('dialog[open]'))dialog.close();app.replaceChildren();current=null;details=null;}error(e);}finally{checkingAccess=false;}},15000);
